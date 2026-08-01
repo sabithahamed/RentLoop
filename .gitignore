@@ -1,0 +1,62 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+expo-env.d.ts
+
+# Metro
+.metro-health-check*
+
+# Native builds
+/android/
+/ios/
+*.orig.*
+*.apk
+*.aab
+*.ipa
+
+# Signing / credentials
+*.jks
+*.keystore
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Supabase
+.supabase/
+supabase/.temp/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs / debug
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Testing
+coverage/
+
+# Editors
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+desktop.ini
+Thumbs.db
