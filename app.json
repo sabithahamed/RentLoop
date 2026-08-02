@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "RentLoop",
+    "slug": "rentloop",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "rentloop",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "backgroundColor": "#F6F7F9",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "RentLoop needs access to your photos so you can attach a bank slip to a payment.",
+          "cameraPermission": "RentLoop needs the camera so you can photograph a bank slip."
+        }
+      ]
+    ]
+  }
+}
