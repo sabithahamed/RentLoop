@@ -13,6 +13,11 @@ import { router, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 
 import { SlipImage } from "@/components/SlipImage";
+import { AgentTrace } from "@/components/AgentTrace";
+import { Pill } from "@/components/lifecycle";
+import { hasGeminiKey, GEMINI_MODEL } from "@/agent/geminiClient";
+import { runSlipReading, type SlipReading } from "@/agent/paymentAgent";
+import type { AgentRun, AgentStep } from "@/agent/types";
 import {
   Button,
   ErrorState,
@@ -33,7 +38,7 @@ import { color, radius, space, type } from "@/theme";
 
 export default function RecordPaymentScreen() {
   const { periodId } = useLocalSearchParams<{ periodId: string }>();
-  const { repo, invalidate } = useApp();
+  const { repo, invalidate, tenancy } = useApp();
 
   const { data, loading, error } = useAsync<PeriodDetail>(
     () => repo.getPeriodDetail(periodId),
@@ -48,6 +53,35 @@ export default function RecordPaymentScreen() {
   const [receiptUri, setReceiptUri] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Slip reading. The agent reads the photo and works out which month it
+  // settles by looking at the ledger — the tenant confirms before anything
+  // is written.
+  const [slipSteps, setSlipSteps] = useState<AgentStep[]>([]);
+  const [readingSlip, setReadingSlip] = useState(false);
+  const [slipRun, setSlipRun] = useState<AgentRun<SlipReading> | null>(null);
+
+  const readSlip = async (uri: string) => {
+    if (!tenancy) return;
+    setSlipSteps([]);
+    setReadingSlip(true);
+    setSlipRun(null);
+    try {
+      const run = await runSlipReading(uri, { repo, tenancyId: tenancy.tenancy.id }, (step) =>
+        setSlipSteps((current) => [...current, step]),
+      );
+      setSlipRun(run);
+
+      // Prefill from what it read. Everything stays editable.
+      if (run.result) {
+        if (run.result.amountCents) setAmount(String(run.result.amountCents / 100));
+        if (run.result.paidOn) setPaidOn(run.result.paidOn);
+        if (run.result.reference) setReference(run.result.reference);
+      }
+    } finally {
+      setReadingSlip(false);
+    }
+  };
 
   // Prefill with what is actually outstanding — but leave it editable, which is
   // what makes a partial payment a first-class thing rather than an error.
@@ -77,8 +111,10 @@ export default function RecordPaymentScreen() {
           });
 
       if (!result.canceled && result.assets[0]) {
-        setReceiptUri(result.assets[0].uri);
+        const uri = result.assets[0].uri;
+        setReceiptUri(uri);
         setFormError(null);
+        if (hasGeminiKey()) void readSlip(uri);
       }
     };
 
@@ -192,6 +228,18 @@ export default function RecordPaymentScreen() {
           multiline
         />
 
+        {slipSteps.length > 0 || readingSlip ? (
+          <View style={styles.slipAgent}>
+            <AgentTrace
+              steps={slipSteps}
+              running={readingSlip}
+              model={slipRun?.model || GEMINI_MODEL}
+              elapsedMs={slipRun?.elapsedMs}
+            />
+            {slipRun?.result ? <SlipVerdict reading={slipRun.result} /> : null}
+          </View>
+        ) : null}
+
         <SectionLabel>Proof</SectionLabel>
         {receiptUri ? (
           <View style={styles.slipPreview}>
@@ -230,6 +278,47 @@ export default function RecordPaymentScreen() {
   );
 }
 
+/** What the slip agent concluded, as something the tenant checks before saving. */
+function SlipVerdict({ reading }: { reading: SlipReading }) {
+  const tone =
+    reading.verdict === "duplicate"
+      ? "bad"
+      : reading.verdict === "exact"
+        ? "good"
+        : reading.verdict === "unmatched"
+          ? "neutral"
+          : "warn";
+
+  return (
+    <View style={styles.verdict}>
+      <View style={styles.verdictTop}>
+        <Pill label={reading.verdict} tone={tone} />
+        {reading.matchedPeriodLabel ? (
+          <Pill label={reading.matchedPeriodLabel} tone="info" />
+        ) : null}
+      </View>
+
+      {reading.unreadable ? (
+        <Text style={styles.verdictText}>{reading.unreadable}</Text>
+      ) : (
+        <Text style={styles.verdictText}>{reading.explanation}</Text>
+      )}
+
+      {reading.verdict === "duplicate" ? (
+        <Text style={styles.verdictWarn}>
+          This slip looks like one already recorded. Saving it again would overstate what you have
+          paid.
+        </Text>
+      ) : null}
+
+      <Text style={styles.verdictMeta}>
+        Read from your photo · {Math.round(reading.confidence * 100)}% confident · check the fields
+        above before saving
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: color.bg },
   content: { padding: space.xl, paddingBottom: space.xxxl * 2 },
@@ -238,6 +327,20 @@ const styles = StyleSheet.create({
   contextSub: { marginTop: space.xs },
 
   spaced: { marginTop: space.xs },
+
+  slipAgent: { marginTop: space.md },
+  verdict: {
+    marginTop: space.md,
+    backgroundColor: color.surface,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.border,
+    padding: space.lg,
+  },
+  verdictTop: { flexDirection: "row", flexWrap: "wrap", gap: space.xs },
+  verdictText: { ...type.body, fontSize: 14, lineHeight: 21, marginTop: space.md },
+  verdictWarn: { fontSize: 13, color: color.danger, marginTop: space.sm, lineHeight: 19 },
+  verdictMeta: { ...type.caption, fontSize: 11.5, marginTop: space.md, fontStyle: "italic" },
 
   partialNote: {
     backgroundColor: "#FCF1DC",

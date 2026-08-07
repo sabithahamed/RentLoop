@@ -447,6 +447,91 @@ export function buildLifecycleSeed(
     ),
   ];
 
+  // The whole point of the deposit agent: damage the tenant reported during the
+  // tenancy and the landlord never repaired. The landlord is now charging for
+  // repainting that same wall. Without this in the record there is nothing to
+  // argue with, and the agent's best reasoning has nothing to find.
+  const pastDampTicketId = id("tkt");
+  tickets.push({
+    id: pastDampTicketId,
+    tenancy_id: pastTenancyId,
+    title: "Damp coming through the bedroom wall above the bed",
+    description:
+      "There is a brown patch spreading on the wall behind the bed. It gets worse after heavy rain. It was not there when I moved in.",
+    category: "structural",
+    urgency: "high",
+    status: "acknowledged",
+    reported_by: "tenant",
+    reported_on: addMonths(thisMonth, -15),
+    photoUris: [mockPhoto("Bedroom wall damp")],
+    suggestion: null,
+    costCents: null,
+    events: [
+      {
+        id: id("evt"),
+        ticket_id: pastDampTicketId,
+        at: iso(addMonths(thisMonth, -15), 9),
+        by: "tenant",
+        label: "Reported the issue",
+        note: "Sent photos of the wall.",
+        status_after: "reported",
+      },
+      {
+        id: id("evt"),
+        ticket_id: pastDampTicketId,
+        at: iso(addMonths(thisMonth, -14), 9),
+        by: "landlord",
+        label: "Acknowledged",
+        note: "Will look into it after the rains.",
+        status_after: "acknowledged",
+      },
+    ],
+  });
+
+  // And an agreement on the old tenancy, so the agent can check liability there
+  // too rather than reporting "no agreement on file".
+  const pastAgreementId = id("agr");
+  const pastAgreement: Agreement = {
+    id: pastAgreementId,
+    tenancy_id: pastTenancyId,
+    file_name: "Boarding room agreement.pdf",
+    file_uri: null,
+    uploaded_at: iso(pastStart),
+    status: "confirmed",
+    endsOn: pastEnd,
+    noticePeriodDays: 30,
+    depositCents: 50_000_00,
+    terms: [
+      {
+        id: id("term"),
+        label: "Refundable deposit",
+        value: "Rs. 50,000",
+        confidence: 0.95,
+        confirmed: true,
+        sourceQuote: "a refundable deposit of Rupees Fifty Thousand",
+      },
+      {
+        id: id("term"),
+        label: "Who pays for repairs",
+        value: "Landlord — anything structural or pre-existing",
+        confidence: 0.86,
+        confirmed: true,
+        sourceQuote:
+          "the Landlord shall remain responsible for the structure, roof and walls of the premises",
+      },
+      {
+        id: id("term"),
+        label: "Condition at handover",
+        value: "Reasonable wear and tear excepted",
+        confidence: 0.9,
+        confirmed: true,
+        sourceQuote:
+          "the Tenant shall return the premises in the condition received, reasonable wear and tear excepted",
+      },
+    ],
+    flaggedClauses: [],
+  };
+
   // -------------------------------------------------------------------------
   // Communication — every thread anchored to something
   // -------------------------------------------------------------------------
@@ -676,7 +761,7 @@ export function buildLifecycleSeed(
   ];
 
   return {
-    agreements: [agreement],
+    agreements: [agreement, pastAgreement],
     inspections: [moveIn, pastMoveIn, pastMoveOut],
     tickets,
     threads,

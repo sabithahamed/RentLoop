@@ -450,6 +450,35 @@ export const mockRepository: Repository = {
     return delay(agreement);
   },
 
+  async applyExtractedAgreement(tenancyId: UUID, extracted) {
+    let agreement = state.agreements.find((a) => a.tenancy_id === tenancyId);
+    if (!agreement) {
+      agreement = await this.uploadAgreement(tenancyId, "Rental agreement (photo)");
+    }
+
+    // Nothing arrives confirmed. Extraction is a proposal, and a term the
+    // tenant has not checked must never silently become a deadline.
+    agreement.terms = extracted.terms.map((t) => ({
+      id: newId("term"),
+      label: t.label,
+      value: t.value,
+      confidence: t.confidence,
+      confirmed: false,
+      sourceQuote: t.sourceQuote,
+    }));
+    agreement.flaggedClauses = extracted.flaggedClauses.map((c) => ({
+      id: newId("clause"),
+      text: c.text,
+      reason: c.reason,
+    }));
+    agreement.depositCents = extracted.depositCents;
+    agreement.noticePeriodDays = extracted.noticePeriodDays;
+    agreement.endsOn = extracted.endsOn;
+    agreement.status = "needs_review";
+
+    return delay(agreement);
+  },
+
   // Inspections --------------------------------------------------------------
 
   async getInspection(tenancyId: UUID, kind: InspectionKind) {
@@ -560,7 +589,10 @@ export const mockRepository: Repository = {
   async createTicket(input) {
     const ticketId = newId("tkt");
     const now = new Date().toISOString();
-    const guess = classifyFromText(`${input.title} ${input.description}`);
+    // Deliberately NOT an AI suggestion. The real agent runs from the report
+    // screen and produces a proper triage; this is only a coarse starting
+    // category so a ticket saved without asking the assistant is not blank.
+    const guess = coarseCategory(`${input.title} ${input.description}`);
 
     const ticket: MaintenanceTicket = {
       id: ticketId,
@@ -574,15 +606,7 @@ export const mockRepository: Repository = {
       reported_on: todayISO(),
       photoUris: input.photoUris,
       costCents: null,
-      suggestion: {
-        id: newId("ai"),
-        kind: "classification",
-        headline: guess.headline,
-        detail: guess.detail,
-        confidence: guess.confidence,
-        acceptedAt: null,
-        rejectedAt: null,
-      },
+      suggestion: null,
       events: [
         {
           id: newId("evt"),
@@ -1083,81 +1107,32 @@ const STATUS_EVENT_LABEL: Record<MaintenanceStatus, string> = {
 };
 
 /**
- * Stand-in for the maintenance classifier.
+ * A coarse first guess at a category, used only so a ticket saved without
+ * asking the assistant is not completely unlabelled.
  *
- * Keyword matching, not intelligence — but it produces a *different* answer
- * for different input, which is what the screens need in order to be judged.
- * The confidence numbers are honest about that: nothing here scores high.
+ * This is deliberately NOT presented as AI anywhere in the UI. It is keyword
+ * matching, it is worse than the agent at everything, and dressing it up as
+ * intelligence was the thing that made the earlier version dishonest.
  */
-function classifyFromText(text: string): {
+function coarseCategory(text: string): {
   category: MaintenanceCategory;
   urgency: MaintenanceUrgency;
-  headline: string;
-  detail: string;
-  confidence: number;
 } {
   const t = text.toLowerCase();
   const has = (...words: string[]): boolean => words.some((w) => t.includes(w));
 
-  if (has("leak", "water", "tap", "pipe", "drip", "flood", "drain")) {
-    const urgent = has("flood", "burst", "everywhere");
-    return {
-      category: "plumbing",
-      urgency: urgent ? "emergency" : "normal",
-      headline: urgent ? "Plumbing — looks urgent" : "Plumbing",
-      detail: urgent
-        ? "Escaping water damages the property quickly. Raised to emergency so it is not queued behind routine work."
-        : "Classified as plumbing. Adjust it if that is wrong.",
-      confidence: 0.79,
-    };
-  }
-  if (has("electric", "socket", "wiring", "shock", "power", "switch", "spark")) {
-    const urgent = has("shock", "spark", "burn");
-    return {
-      category: "electrical",
-      urgency: urgent ? "emergency" : "high",
-      headline: urgent ? "Electrical — safety risk" : "Electrical",
-      detail: urgent
-        ? "Anything involving shocks or sparks is a safety issue. Please do not use the fitting until it has been looked at."
-        : "Electrical faults tend to get worse, so this was raised to high.",
-      confidence: 0.74,
-    };
-  }
-  if (has("damp", "mould", "mold", "crack", "ceiling", "wall", "roof")) {
-    return {
-      category: "structural",
-      urgency: "high",
-      headline: "Structural — worth acting on early",
-      detail:
-        "Damp and cracks spread, and the repair cost grows with them. Raised to high so it does not sit.",
-      confidence: 0.71,
-    };
-  }
-  if (has("fridge", "oven", "washing", "machine", "heater", "ac", "air condition")) {
-    return {
-      category: "appliance",
-      urgency: "normal",
-      headline: "Appliance",
-      detail: "Classified as an appliance fault.",
-      confidence: 0.68,
-    };
-  }
-  if (has("rat", "mice", "cockroach", "termite", "ants", "pest")) {
-    return {
-      category: "pest",
-      urgency: "high",
-      headline: "Pests — usually gets worse quickly",
-      detail: "Infestations spread. Raised to high.",
-      confidence: 0.7,
-    };
-  }
-  return {
-    category: "other",
-    urgency: "normal",
-    headline: "Could not classify this confidently",
-    detail: "Pick a category yourself so your landlord can see what kind of issue this is.",
-    confidence: 0.31,
-  };
+  if (has("leak", "water", "tap", "pipe", "drip", "flood", "drain"))
+    return { category: "plumbing", urgency: "normal" };
+  if (has("electric", "socket", "wiring", "shock", "power", "switch", "spark"))
+    return { category: "electrical", urgency: "high" };
+  if (has("damp", "mould", "mold", "crack", "ceiling", "wall", "roof"))
+    return { category: "structural", urgency: "normal" };
+  if (has("fridge", "oven", "washing", "machine", "heater", "ac"))
+    return { category: "appliance", urgency: "normal" };
+  if (has("rat", "mice", "cockroach", "termite", "ants", "pest"))
+    return { category: "pest", urgency: "high" };
+
+  return { category: "other", urgency: "normal" };
 }
 
 /** Missing-area prompts — recomputed whenever an inspection changes. */

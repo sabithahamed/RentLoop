@@ -5,6 +5,10 @@ import { Stack, router, useLocalSearchParams } from "expo-router";
 import { EmptyNote, Pill } from "@/components/lifecycle";
 import { Button, Card, ErrorState, Field, LoadingState, SectionLabel } from "@/components/ui";
 import { useApp, useAsync } from "@/data/store";
+import { AgentTrace } from "@/components/AgentTrace";
+import { hasGeminiKey, GEMINI_MODEL } from "@/agent/geminiClient";
+import { runDepositAnalysis, type DepositAnalysis } from "@/agent/depositAgent";
+import type { AgentRun, AgentStep } from "@/agent/types";
 import { formatDate, formatLKR, parseLKRInput } from "@/data/ledger";
 import { settlementTotals } from "@/data/mock/lifecycleSeed";
 import type { DepositSettlement } from "@/data/lifecycleTypes";
@@ -51,6 +55,28 @@ export default function DepositScreen() {
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+
+  // The deposit agent. This is the one that has to chain lookups: what the
+  // landlord claims, what the photos show, what the agreement says, and
+  // crucially whether the damage was reported during the tenancy and ignored.
+  const [analysisSteps, setAnalysisSteps] = useState<AgentStep[]>([]);
+  const [analysing, setAnalysing] = useState(false);
+  const [analysis, setAnalysis] = useState<AgentRun<DepositAnalysis> | null>(null);
+
+  const analyse = async () => {
+    if (!targetId) return;
+    setAnalysisSteps([]);
+    setAnalysing(true);
+    setAnalysis(null);
+    try {
+      const run = await runDepositAnalysis({ repo, tenancyId: targetId }, (step) =>
+        setAnalysisSteps((current) => [...current, step]),
+      );
+      setAnalysis(run);
+    } finally {
+      setAnalysing(false);
+    }
+  };
 
   const respond = async (deductionId: string, agreed: boolean) => {
     setBusy(true);
@@ -168,6 +194,40 @@ export default function DepositScreen() {
           onPress={() => router.push(`/inspection/compare?tenancyId=${settlement.tenancy_id}`)}
           style={styles.compare}
         />
+
+        {role === "tenant" ? (
+          analysisSteps.length > 0 || analysing ? (
+            <View style={styles.agentWrap}>
+              <AgentTrace
+                steps={analysisSteps}
+                running={analysing}
+                model={analysis?.model || GEMINI_MODEL}
+                elapsedMs={analysis?.elapsedMs}
+              />
+              {analysis?.result ? <DepositAnalysisCard analysis={analysis.result} /> : null}
+              {analysis?.error && !analysis.result ? (
+                <Text style={styles.agentError}>{analysis.error}</Text>
+              ) : null}
+              {!analysing ? (
+                <Button label="Run it again" variant="ghost" onPress={analyse} />
+              ) : null}
+            </View>
+          ) : (
+            <View style={styles.agentPrompt}>
+              <Pill label="ASSISTANT" tone="info" />
+              <Text style={styles.agentPromptText}>
+                I can go through each deduction against your move-in photos, your agreement, and
+                what you reported during the tenancy — then draft your reply.
+              </Text>
+              <Button
+                label="Check these deductions for me"
+                onPress={analyse}
+                disabled={!hasGeminiKey()}
+                style={styles.agentButton}
+              />
+            </View>
+          )
+        ) : null}
 
         <SectionLabel>Proposed deductions</SectionLabel>
         <View style={styles.list}>
@@ -317,6 +377,77 @@ export default function DepositScreen() {
   );
 }
 
+const POSITION_TONE: Record<string, "good" | "warn" | "bad" | "neutral"> = {
+  accept: "neutral",
+  reduce: "warn",
+  reject: "bad",
+  needs_evidence: "warn",
+};
+
+const POSITION_LABEL: Record<string, string> = {
+  accept: "fair — accept it",
+  reduce: "too high",
+  reject: "dispute it",
+  needs_evidence: "unsupported",
+};
+
+/** The agent's position on each deduction, plus a message the tenant can send. */
+function DepositAnalysisCard({ analysis }: { analysis: DepositAnalysis }) {
+  return (
+    <View style={styles.analysis}>
+      <Text style={styles.analysisSummary}>{analysis.summary}</Text>
+
+      {analysis.totalDisputedCents > 0 ? (
+        <View style={styles.disputedBanner}>
+          <Text style={styles.disputedText}>
+            {formatLKR(analysis.totalDisputedCents)} of what is claimed looks worth challenging.
+          </Text>
+        </View>
+      ) : null}
+
+      {analysis.positions.map((position, i) => (
+        <View key={i} style={styles.position}>
+          <View style={styles.positionTop}>
+            <Text style={styles.positionLabel}>{position.label}</Text>
+            <Pill
+              label={POSITION_LABEL[position.position] ?? position.position}
+              tone={POSITION_TONE[position.position] ?? "neutral"}
+            />
+          </View>
+          <Text style={styles.positionReason}>{position.reasoning}</Text>
+          {position.suggestedCounterCents !== null && position.amountCents > 0 ? (
+            <Text style={styles.counter}>
+              Claimed {formatLKR(position.amountCents)} · you could offer{" "}
+              {formatLKR(position.suggestedCounterCents)}
+            </Text>
+          ) : null}
+          {position.evidence.length > 0 ? (
+            <View style={styles.evidenceList}>
+              {position.evidence.map((e, j) => (
+                <Text key={j} style={styles.evidenceItem}>
+                  · {e}
+                </Text>
+              ))}
+            </View>
+          ) : null}
+        </View>
+      ))}
+
+      {analysis.draftMessage ? (
+        <View style={styles.draft}>
+          <Text style={styles.draftLabel}>DRAFT REPLY — YOURS TO EDIT OR IGNORE</Text>
+          <Text style={styles.draftBody}>{analysis.draftMessage}</Text>
+        </View>
+      ) : null}
+
+      <Text style={styles.analysisFoot}>
+        {Math.round(analysis.confidence * 100)}% confident. This is a position based on your
+        records, not legal advice — nothing is sent until you send it.
+      </Text>
+    </View>
+  );
+}
+
 const STATUS_LABEL: Record<DepositSettlement["status"], string> = {
   not_started: "Not started",
   proposed: "Awaiting your response",
@@ -369,6 +500,65 @@ const styles = StyleSheet.create({
   respond: { flexDirection: "row", gap: space.sm, marginTop: space.lg },
   waiting: { ...type.caption, fontSize: 12.5, marginTop: space.md, fontStyle: "italic" },
   answered: { marginTop: space.md },
+
+  agentWrap: { marginTop: space.lg, marginBottom: space.sm },
+  agentError: { ...type.caption, color: color.danger, marginTop: space.md, lineHeight: 18 },
+  agentPrompt: {
+    marginTop: space.lg,
+    backgroundColor: "#F4F1FB",
+    borderRadius: radius.md,
+    padding: space.lg,
+  },
+  agentPromptText: { fontSize: 13.5, color: "#5B5480", lineHeight: 19, marginTop: space.sm },
+  agentButton: { marginTop: space.lg },
+
+  analysis: {
+    marginTop: space.md,
+    backgroundColor: color.surface,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.border,
+    padding: space.lg,
+  },
+  analysisSummary: { ...type.body, fontSize: 14, lineHeight: 21 },
+  disputedBanner: {
+    marginTop: space.md,
+    backgroundColor: "#FCF1DC",
+    borderRadius: radius.sm,
+    padding: space.md,
+  },
+  disputedText: { fontSize: 13.5, color: "#8A5A00", fontWeight: "600", lineHeight: 19 },
+  position: {
+    marginTop: space.lg,
+    paddingTop: space.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: color.border,
+  },
+  positionTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: space.sm,
+  },
+  positionLabel: { flex: 1, fontSize: 15, fontWeight: "600", color: color.text },
+  positionReason: { ...type.caption, fontSize: 13.5, lineHeight: 20, marginTop: space.xs },
+  counter: {
+    fontSize: 13,
+    color: color.accent,
+    marginTop: space.xs,
+    fontVariant: ["tabular-nums"],
+  },
+  evidenceList: { marginTop: space.sm, gap: 2 },
+  evidenceItem: { fontSize: 12.5, color: color.textFaint, lineHeight: 18 },
+  draft: {
+    marginTop: space.lg,
+    backgroundColor: color.surfaceSunken,
+    borderRadius: radius.sm,
+    padding: space.md,
+  },
+  draftLabel: { fontSize: 9, fontWeight: "700", letterSpacing: 0.8, color: color.textFaint },
+  draftBody: { fontSize: 13.5, color: color.text, lineHeight: 20, marginTop: space.sm },
+  analysisFoot: { ...type.caption, fontSize: 11.5, marginTop: space.lg, fontStyle: "italic" },
 
   addButton: { marginTop: space.xl },
   addForm: { marginTop: space.lg },

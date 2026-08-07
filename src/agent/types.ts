@@ -51,9 +51,9 @@ export interface TriageResult {
   confidence: number;
 }
 
-export interface AgentRun {
+export interface AgentRun<T = TriageResult> {
   steps: AgentStep[];
-  result: TriageResult | null;
+  result: T | null;
   error: string | null;
   model: string;
   elapsedMs: number;

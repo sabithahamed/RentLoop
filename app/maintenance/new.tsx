@@ -53,7 +53,7 @@ export default function NewTicketScreen() {
     setError(null);
     try {
       const finished = await runMaintenanceTriage(
-        { title: title.trim(), description: description.trim(), photoCount: photoUris.length },
+        { title: title.trim(), description: description.trim(), photoUris },
         { repo, tenancyId: tenancy.tenancy.id },
         (step) => setSteps((current) => [...current, step]),
       );

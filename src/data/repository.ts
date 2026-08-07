@@ -58,6 +58,15 @@ export interface SignUpInput {
   displayName: string;
 }
 
+/** What the agreement agent produces. Shaped here so the repository does not import the agent. */
+export interface ExtractedAgreementInput {
+  terms: { label: string; value: string; confidence: number; sourceQuote: string | null }[];
+  flaggedClauses: { text: string; reason: string }[];
+  depositCents: number | null;
+  noticePeriodDays: number | null;
+  endsOn: string | null;
+}
+
 export interface RecordPaymentInput {
   rentPeriodId: UUID;
   amountCents: Cents;
@@ -116,6 +125,12 @@ export interface Repository {
   getAgreement(tenancyId: UUID): Promise<Agreement | null>;
   uploadAgreement(tenancyId: UUID, fileName: string): Promise<Agreement>;
   confirmTerm(agreementId: UUID, termId: UUID, value: string): Promise<Agreement>;
+  /**
+   * Replace an agreement's terms with what the extraction agent read from the
+   * document. Nothing arrives confirmed — the tenant still checks each term
+   * against their own copy before it drives a reminder.
+   */
+  applyExtractedAgreement(tenancyId: UUID, extracted: ExtractedAgreementInput): Promise<Agreement>;
 
   // Inspections
   getInspection(tenancyId: UUID, kind: InspectionKind): Promise<InspectionSession>;

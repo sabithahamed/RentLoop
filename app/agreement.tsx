@@ -4,8 +4,12 @@ import { Stack, router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 
 import { AiDisclaimer, Pill } from "@/components/lifecycle";
+import { AgentTrace } from "@/components/AgentTrace";
 import { Button, Card, ErrorState, LoadingState, SectionLabel } from "@/components/ui";
 import { useApp, useAsync } from "@/data/store";
+import { hasGeminiKey, GEMINI_MODEL } from "@/agent/geminiClient";
+import { runAgreementExtraction, type ExtractedAgreement } from "@/agent/agreementAgent";
+import type { AgentRun, AgentStep } from "@/agent/types";
 import type { Agreement } from "@/data/lifecycleTypes";
 import { color, radius, space, type } from "@/theme";
 
@@ -31,6 +35,9 @@ export default function AgreementScreen() {
   );
 
   const [busy, setBusy] = useState(false);
+  const [extracting, setExtracting] = useState(false);
+  const [steps, setSteps] = useState<AgentStep[]>([]);
+  const [extracted, setExtracted] = useState<AgentRun<ExtractedAgreement> | null>(null);
 
   const confirm = async (termId: string, value: string) => {
     if (!agreement) return;
@@ -70,12 +77,23 @@ export default function AgreementScreen() {
 
     if (result.canceled || !result.assets[0]) return;
 
-    setBusy(true);
+    // The photo goes to the model. Extraction is real: the terms below come
+    // from this document, not from a fixture.
+    setSteps([]);
+    setExtracting(true);
+    setExtracted(null);
     try {
-      await repo.uploadAgreement(tenancyId, "Rental agreement (photo)");
-      invalidate();
+      const run = await runAgreementExtraction([result.assets[0].uri], (step) =>
+        setSteps((current) => [...current, step]),
+      );
+      setExtracted(run);
+      if (run.result && !run.result.notAnAgreement) {
+        await repo.uploadAgreement(tenancyId, "Rental agreement (photo)");
+        await repo.applyExtractedAgreement(tenancyId, run.result);
+        invalidate();
+      }
     } finally {
-      setBusy(false);
+      setExtracting(false);
     }
   };
 
@@ -90,20 +108,42 @@ export default function AgreementScreen() {
           <Card>
             <Text style={type.heading}>No agreement uploaded</Text>
             <Text style={styles.emptyText}>
-              Upload it once and the rent, deposit, notice period and end date become reminders
+              Photograph it once and the rent, deposit, notice period and end date become reminders
               instead of things you have to remember.
             </Text>
             <Button
               label="Photograph the agreement"
               onPress={upload}
-              loading={busy}
+              loading={extracting}
+              disabled={!hasGeminiKey()}
               style={styles.uploadButton}
             />
             <Text style={styles.uploadNote}>
-              Most agreements here only exist on paper, so a photo of each page is the realistic
-              input. In the prototype the extraction is canned rather than run on your photo.
+              {hasGeminiKey()
+                ? "Most agreements here exist only on paper, so a photo of each page is the realistic input. The assistant reads your actual document and quotes the wording each term came from."
+                : "Set EXPO_PUBLIC_GEMINI_API_KEY in .env to enable reading the agreement."}
             </Text>
           </Card>
+
+          {steps.length > 0 || extracting ? (
+            <View style={styles.traceWrap}>
+              <AgentTrace
+                steps={steps}
+                running={extracting}
+                model={extracted?.model || GEMINI_MODEL}
+                elapsedMs={extracted?.elapsedMs}
+              />
+            </View>
+          ) : null}
+
+          {extracted?.result?.notAnAgreement ? (
+            <Card style={styles.traceWrap}>
+              <Pill label="Not an agreement" tone="warn" />
+              <Text style={styles.emptyText}>{extracted.result.notAnAgreement}</Text>
+            </Card>
+          ) : null}
+
+          {extracted?.error ? <Text style={styles.errorText}>{extracted.error}</Text> : null}
         </ScrollView>
       </>
     );
@@ -248,6 +288,8 @@ const styles = StyleSheet.create({
   content: { padding: space.xl, paddingBottom: space.xxxl * 2 },
 
   emptyText: { ...type.bodyMuted, fontSize: 14, lineHeight: 21, marginTop: space.sm },
+  traceWrap: { marginTop: space.lg },
+  errorText: { ...type.caption, color: color.danger, marginTop: space.md, lineHeight: 18 },
   uploadButton: { marginTop: space.lg },
   uploadNote: { ...type.caption, fontSize: 12, marginTop: space.sm, fontStyle: "italic" },
 

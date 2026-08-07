@@ -47,6 +47,8 @@ export interface FunctionDeclaration {
 
 export interface GeminiPart {
   text?: string;
+  /** A photo for the model to look at. Base64, no data: prefix. */
+  inlineData?: { mimeType: string; data: string };
   functionCall?: { name: string; args: Record<string, unknown> };
   functionResponse?: { name: string; response: Record<string, unknown> };
 }
@@ -76,20 +78,38 @@ export async function generateContent(input: {
     );
   }
 
-  const response = await fetch(`${ENDPOINT}/${GEMINI_MODEL}:generateContent?key=${key}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    signal: input.signal,
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: input.systemInstruction }] },
-      contents: input.contents,
-      tools: [{ functionDeclarations: input.tools }],
-      toolConfig: { functionCallingConfig: { mode: "AUTO" } },
-      generationConfig: { temperature: 0.2 },
-    }),
+  const payload = JSON.stringify({
+    systemInstruction: { parts: [{ text: input.systemInstruction }] },
+    contents: input.contents,
+    tools: [{ functionDeclarations: input.tools }],
+    toolConfig: { functionCallingConfig: { mode: "AUTO" } },
+    generationConfig: { temperature: 0.2 },
   });
 
-  const body = (await response.json()) as GenerateResponse;
+  // The free tier returns 503 "high demand" and 429 often enough that a
+  // multi-turn agent will hit one mid-run. Losing four completed tool calls to
+  // a transient overload is not acceptable, so retry those with backoff.
+  // Everything else — bad model, bad key, blocked content — fails immediately,
+  // because retrying it would just be slower.
+  let response: Response | null = null;
+  let body: GenerateResponse | null = null;
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    response = await fetch(`${ENDPOINT}/${GEMINI_MODEL}:generateContent?key=${key}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: input.signal,
+      body: payload,
+    });
+    body = (await response.json()) as GenerateResponse;
+
+    const transient = response.status === 503 || response.status === 429;
+    if (response.ok || !transient || attempt === 2) break;
+
+    await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
+  }
+
+  if (!response || !body) throw new Error("Gemini could not be reached");
 
   if (!response.ok) {
     // Surface Google's own message — "model not found" and "quota exceeded"
