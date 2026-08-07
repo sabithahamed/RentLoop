@@ -7,7 +7,7 @@ import { Button, Card, LoadingState, SectionLabel } from "@/components/ui";
 import { useApp, useAsync } from "@/data/store";
 import { formatDate } from "@/data/ledger";
 import type { Invitation } from "@/data/lifecycleTypes";
-import { color, radius, space, type } from "@/theme";
+import { color, space, type } from "@/theme";
 
 /**
  * Tenant-only → connected mode.

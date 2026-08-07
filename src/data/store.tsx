@@ -176,6 +176,41 @@ export function useApp(): AppContextValue {
 }
 
 /**
+ * Turn a stored `receipt_path` into something an `<Image>` can render.
+ *
+ * The mock stores a directly renderable URI, so this looks redundant today.
+ * It is not: Supabase stores an object path (`{owner}/{payment}.jpg`) that
+ * renders as nothing until it is signed. Screens that read `receipt_path`
+ * directly would all break on that switch — which is exactly the coupling the
+ * repository seam exists to prevent.
+ */
+export function useReceiptUrl(receiptPath: string | null): string | null {
+  const { repo } = useApp();
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!receiptPath) {
+      setUrl(null);
+      return;
+    }
+    repo
+      .getReceiptUrl(receiptPath)
+      .then((resolved) => {
+        if (!cancelled) setUrl(resolved);
+      })
+      .catch(() => {
+        if (!cancelled) setUrl(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [receiptPath, repo]);
+
+  return url;
+}
+
+/**
  * Small async-load helper so screens do not each reinvent
  * loading/error/refetch. Re-runs whenever `deps` or the store revision change.
  */

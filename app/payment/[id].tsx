@@ -3,7 +3,7 @@ import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 
-import { SlipImage } from "@/components/SlipImage";
+import { StoredSlip } from "@/components/SlipImage";
 import {
   Button,
   Card,
@@ -89,8 +89,8 @@ export default function PaymentDetailScreen() {
       <SectionLabel>Bank slip</SectionLabel>
 
       {data.receipt_path ? (
-        <SlipImage
-          uri={data.receipt_path}
+        <StoredSlip
+          receiptPath={data.receipt_path}
           amountCents={data.amount_cents}
           paidOn={data.paid_on}
           reference={data.reference}

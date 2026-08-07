@@ -17,4 +17,17 @@ module.exports = tseslint.config(
       ],
     },
   },
+  {
+    // Dev scripts run in Node, not in the app bundle. The `*.js` ignore above
+    // does not cover `.mjs`, and these are worth linting rather than hiding.
+    files: ["scripts/**/*.mjs"],
+    languageOptions: {
+      globals: {
+        console: "readonly",
+        process: "readonly",
+        fetch: "readonly",
+        URL: "readonly",
+      },
+    },
+  },
 );

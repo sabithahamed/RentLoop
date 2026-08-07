@@ -3,7 +3,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import { Stack, router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 
-import { AiDisclaimer, EmptyNote, Pill } from "@/components/lifecycle";
+import { AiDisclaimer, Pill } from "@/components/lifecycle";
 import { Button, Card, ErrorState, LoadingState, SectionLabel } from "@/components/ui";
 import { useApp, useAsync } from "@/data/store";
 import type { Agreement } from "@/data/lifecycleTypes";

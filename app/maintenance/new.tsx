@@ -12,10 +12,14 @@ import {
 import { Stack, router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 
+import { AgentTrace, TriageCard } from "@/components/AgentTrace";
 import { PhotoRow, Pill } from "@/components/lifecycle";
 import { Button, Field, SectionLabel } from "@/components/ui";
 import { useApp } from "@/data/store";
 import { CATEGORIES, CATEGORY_LABEL } from "@/data/maintenanceLabels";
+import { GEMINI_MODEL, hasGeminiKey } from "@/agent/geminiClient";
+import { runMaintenanceTriage } from "@/agent/maintenanceAgent";
+import type { AgentRun, AgentStep } from "@/agent/types";
 import { color, radius, space, type } from "@/theme";
 
 /**
@@ -34,6 +38,30 @@ export default function NewTicketScreen() {
   const [photoUris, setPhotoUris] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Agent state. Steps are held separately from `run` so they can stream in
+  // while the loop is still going.
+  const [steps, setSteps] = useState<AgentStep[]>([]);
+  const [running, setRunning] = useState(false);
+  const [run, setRun] = useState<AgentRun | null>(null);
+
+  const triage = async () => {
+    if (!tenancy || !title.trim()) return;
+    setRunning(true);
+    setSteps([]);
+    setRun(null);
+    setError(null);
+    try {
+      const finished = await runMaintenanceTriage(
+        { title: title.trim(), description: description.trim(), photoCount: photoUris.length },
+        { repo, tenancyId: tenancy.tenancy.id },
+        (step) => setSteps((current) => [...current, step]),
+      );
+      setRun(finished);
+    } finally {
+      setRunning(false);
+    }
+  };
 
   const addPhoto = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -66,6 +94,13 @@ export default function NewTicketScreen() {
         photoUris,
         by: role,
       });
+
+      // The agent's answer wins over the keyword fallback inside createTicket,
+      // but only because the tenant saw it and chose to send it.
+      if (run?.result) {
+        await repo.classifyTicket(ticket.id, run.result.category, run.result.urgency);
+      }
+
       invalidate();
       router.replace(`/maintenance/${ticket.id}`);
     } catch (e) {
@@ -117,17 +152,58 @@ export default function NewTicketScreen() {
             </Text>
           </Pressable>
 
-          <View style={styles.aiHint}>
-            <Pill label="ASSISTANT" tone="info" />
-            <Text style={styles.aiHintText}>
-              Once you save, I will suggest a category and how urgent this looks. You can change
-              both.
-            </Text>
-          </View>
+          <SectionLabel>Before you send it</SectionLabel>
+
+          {run || running ? (
+            <>
+              <AgentTrace
+                steps={steps}
+                running={running}
+                model={run?.model ?? GEMINI_MODEL}
+                elapsedMs={run?.elapsedMs}
+              />
+              {run?.result ? <TriageCard result={run.result} /> : null}
+              {run?.error && !run.result ? (
+                <Text style={styles.agentError}>{run.error}</Text>
+              ) : null}
+              {!running ? (
+                <Button
+                  label="Run it again"
+                  variant="ghost"
+                  onPress={triage}
+                  style={styles.rerun}
+                />
+              ) : null}
+            </>
+          ) : (
+            <View style={styles.aiHint}>
+              <Pill label="ASSISTANT" tone="info" />
+              <Text style={styles.aiHintText}>
+                {hasGeminiKey()
+                  ? "I can read your agreement, check your move-in photos and look for issues you already reported, then tell you how urgent this is and who is likely to pay."
+                  : "Set EXPO_PUBLIC_GEMINI_API_KEY in .env to enable the assistant. Without it you can still report the issue."}
+              </Text>
+            </View>
+          )}
+
+          {hasGeminiKey() && !run && !running ? (
+            <Button
+              label="Ask the assistant"
+              variant="secondary"
+              onPress={triage}
+              disabled={!title.trim()}
+              style={styles.askButton}
+            />
+          ) : null}
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <Button label="Report it" onPress={submit} loading={busy} style={styles.submit} />
+          <Button
+            label={run?.result ? "Report it, with the triage" : "Report it"}
+            onPress={submit}
+            loading={busy}
+            style={styles.submit}
+          />
 
           <Text style={styles.categories}>
             Categories: {CATEGORIES.map((c) => CATEGORY_LABEL[c]).join(" · ")}
@@ -166,6 +242,10 @@ const styles = StyleSheet.create({
     marginTop: space.xl,
   },
   aiHintText: { flex: 1, fontSize: 13, color: "#5B5480", lineHeight: 19 },
+
+  agentError: { ...type.caption, color: color.danger, marginTop: space.md, lineHeight: 18 },
+  rerun: { marginTop: space.sm },
+  askButton: { marginTop: space.lg },
 
   error: { ...type.caption, color: color.danger, marginTop: space.md },
   submit: { marginTop: space.xl },

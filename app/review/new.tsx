@@ -15,7 +15,7 @@ import { Button, Card, Field, LoadingState } from "@/components/ui";
 import { useApp, useAsync } from "@/data/store";
 import { formatDate } from "@/data/ledger";
 import type { TenancySummary } from "@/data/types";
-import { color, radius, space, type } from "@/theme";
+import { color, space, type } from "@/theme";
 
 const RATING_WORDS = ["", "Bad", "Poor", "Fair", "Good", "Excellent"];
 

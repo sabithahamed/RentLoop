@@ -2,7 +2,7 @@ import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 
-import { SlipImage } from "@/components/SlipImage";
+import { StoredSlip } from "@/components/SlipImage";
 import { StatusChip } from "@/components/StatusChip";
 import { Button, Card, Divider, ErrorState, LoadingState, SectionLabel } from "@/components/ui";
 import { useApp, useAsync } from "@/data/store";
@@ -75,8 +75,8 @@ export default function PeriodDetailScreen() {
                 style={({ pressed }) => [styles.paymentRow, pressed && styles.paymentRowPressed]}
               >
                 {payment.receipt_path ? (
-                  <SlipImage
-                    uri={payment.receipt_path}
+                  <StoredSlip
+                    receiptPath={payment.receipt_path}
                     amountCents={payment.amount_cents}
                     paidOn={payment.paid_on}
                     reference={payment.reference}

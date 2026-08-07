@@ -13,9 +13,57 @@ import { Image, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "r
 import { color, radius, space, type } from "../theme";
 import { MOCK_SLIP_URI } from "../data/mock/seed";
 import { formatDate, formatLKR } from "../data/ledger";
+import { useReceiptUrl } from "../data/store";
 import type { Cents, ISODate } from "../data/types";
 
 export const isMockSlip = (uri: string | null): boolean => !!uri && uri.startsWith(MOCK_SLIP_URI);
+
+/**
+ * A slip that has already been stored, addressed by its `receipt_path`.
+ *
+ * Use this anywhere a saved payment's proof is displayed. It resolves the path
+ * through the repository first, so the stored form can change — a local URI in
+ * the mock, a signed URL under Supabase — without any screen knowing.
+ *
+ * `SlipImage` below stays for the one case that is genuinely different: a photo
+ * just picked from the camera, which has no stored path yet.
+ */
+export function StoredSlip({
+  receiptPath,
+  amountCents,
+  paidOn,
+  reference,
+  variant = "full",
+  style,
+}: {
+  receiptPath: string;
+  amountCents: Cents;
+  paidOn: ISODate;
+  reference: string | null;
+  variant?: "thumb" | "full";
+  style?: StyleProp<ViewStyle>;
+}) {
+  const uri = useReceiptUrl(receiptPath);
+
+  if (!uri) {
+    // Resolving, or the object has gone missing. Either way there is nothing to
+    // draw yet — an empty frame beats a broken-image icon.
+    return (
+      <View style={[variant === "thumb" ? styles.thumb : styles.full, styles.pending, style]} />
+    );
+  }
+
+  return (
+    <SlipImage
+      uri={uri}
+      amountCents={amountCents}
+      paidOn={paidOn}
+      reference={reference}
+      variant={variant}
+      style={style}
+    />
+  );
+}
 
 export function SlipImage({
   uri,
@@ -106,6 +154,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.surfaceSunken,
   },
   imageFill: { width: "100%", height: "100%" },
+  pending: { backgroundColor: color.surfaceSunken, borderWidth: 0 },
 
   paper: {
     backgroundColor: "#FCFBF7",

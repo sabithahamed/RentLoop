@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 
 import { Pill } from "@/components/lifecycle";
-import { Button, Card, ErrorState, LoadingState } from "@/components/ui";
+import { Button, ErrorState, LoadingState } from "@/components/ui";
 import { useApp, useAsync } from "@/data/store";
 import { formatDate, formatLKR } from "@/data/ledger";
 import { PAYMENT_METHOD_LABELS, type PaymentMethod } from "@/data/types";
