@@ -21,6 +21,8 @@ import React, {
 } from 'react';
 
 import { mockRepository, resetToSeed } from './mock/mockRepository';
+import { supabaseRepository } from './supabase/supabaseRepository';
+import { isSupabaseConfigured } from './supabase/client';
 import type { Repository, Session, SignUpInput } from './repository';
 import type { Role } from './lifecycleTypes';
 import type { TenancySummary } from './types';
@@ -54,7 +56,7 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-const repo: Repository = mockRepository;
+const repo: Repository = isSupabaseConfigured ? supabaseRepository : mockRepository;
 
 /**
  * The chosen role outlives a reload.
