@@ -5,7 +5,7 @@
  * editing this file and src/theme.ts, not eight screens.
  */
 
-import React from 'react';
+import React from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -17,9 +17,9 @@ import {
   type TextInputProps,
   type TextStyle,
   type ViewStyle,
-} from 'react-native';
+} from "react-native";
 
-import { color, radius, shadow, space, type } from '../theme';
+import { color, radius, shadow, space, type } from "../theme";
 
 // ---------------------------------------------------------------------------
 
@@ -32,12 +32,16 @@ export function Card({
   style?: StyleProp<ViewStyle>;
   padded?: boolean;
 }) {
-  return (
-    <View style={[styles.card, padded && { padding: space.lg }, style]}>{children}</View>
-  );
+  return <View style={[styles.card, padded && { padding: space.lg }, style]}>{children}</View>;
 }
 
-export function SectionLabel({ children, style }: { children: React.ReactNode; style?: StyleProp<TextStyle> }) {
+export function SectionLabel({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: StyleProp<TextStyle>;
+}) {
   return <Text style={[type.label, styles.sectionLabel, style]}>{children}</Text>;
 }
 
@@ -58,7 +62,7 @@ export function KeyValue({
   return (
     <View style={styles.kv}>
       <Text style={[type.bodyMuted, styles.kvLabel]}>{label}</Text>
-      {typeof value === 'string' ? (
+      {typeof value === "string" ? (
         <Text style={[type.body, styles.kvValue, valueStyle]}>{value}</Text>
       ) : (
         <View style={styles.kvValue}>{value}</View>
@@ -69,12 +73,12 @@ export function KeyValue({
 
 // ---------------------------------------------------------------------------
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
 export function Button({
   label,
   onPress,
-  variant = 'primary',
+  variant = "primary",
   disabled = false,
   loading = false,
   style,
@@ -96,25 +100,25 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        variant === 'primary' && styles.buttonPrimary,
-        variant === 'secondary' && styles.buttonSecondary,
-        variant === 'ghost' && styles.buttonGhost,
-        variant === 'danger' && styles.buttonDanger,
+        variant === "primary" && styles.buttonPrimary,
+        variant === "secondary" && styles.buttonSecondary,
+        variant === "ghost" && styles.buttonGhost,
+        variant === "danger" && styles.buttonDanger,
         pressed && !isDisabled && styles.buttonPressed,
         isDisabled && styles.buttonDisabled,
         style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? color.textInverse : color.accent} />
+        <ActivityIndicator color={variant === "primary" ? color.textInverse : color.accent} />
       ) : (
         <Text
           style={[
             styles.buttonLabel,
-            variant === 'primary' && { color: color.textInverse },
-            variant === 'secondary' && { color: color.accent },
-            variant === 'ghost' && { color: color.textMuted },
-            variant === 'danger' && { color: color.danger },
+            variant === "primary" && { color: color.textInverse },
+            variant === "secondary" && { color: color.accent },
+            variant === "ghost" && { color: color.textMuted },
+            variant === "danger" && { color: color.danger },
           ]}
         >
           {label}
@@ -148,7 +152,11 @@ export function Field({
       </Text>
       <TextInput
         placeholderTextColor={color.textFaint}
-        style={[styles.input, !!error && styles.inputError, inputProps.multiline && styles.inputMultiline]}
+        style={[
+          styles.input,
+          !!error && styles.inputError,
+          inputProps.multiline && styles.inputMultiline,
+        ]}
         {...inputProps}
       />
       {error ? (
@@ -203,7 +211,7 @@ export function Centered({ children }: { children: React.ReactNode }) {
   return <View style={styles.centered}>{children}</View>;
 }
 
-export function LoadingState({ label = 'Loading' }: { label?: string }) {
+export function LoadingState({ label = "Loading" }: { label?: string }) {
   return (
     <Centered>
       <ActivityIndicator color={color.accent} />
@@ -216,7 +224,7 @@ export function ErrorState({ message }: { message: string }) {
   return (
     <Centered>
       <Text style={[type.heading, { color: color.danger }]}>Something went wrong</Text>
-      <Text style={[type.caption, { marginTop: space.sm, textAlign: 'center' }]}>{message}</Text>
+      <Text style={[type.caption, { marginTop: space.sm, textAlign: "center" }]}>{message}</Text>
     </Centered>
   );
 }
@@ -240,9 +248,9 @@ const styles = StyleSheet.create({
     backgroundColor: color.border,
   },
   kv: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
     paddingVertical: space.md,
     gap: space.lg,
   },
@@ -251,30 +259,30 @@ const styles = StyleSheet.create({
   },
   kvValue: {
     flex: 1,
-    textAlign: 'right',
+    textAlign: "right",
   },
 
   button: {
     height: 50,
     borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: space.xl,
   },
   buttonPrimary: { backgroundColor: color.accent },
   buttonSecondary: {
     backgroundColor: color.accentSoft,
   },
-  buttonGhost: { backgroundColor: 'transparent' },
+  buttonGhost: { backgroundColor: "transparent" },
   buttonDanger: { backgroundColor: color.dangerSoft },
   buttonPressed: { opacity: 0.82 },
   buttonDisabled: { opacity: 0.45 },
-  buttonLabel: { fontSize: 15, fontWeight: '600' },
+  buttonLabel: { fontSize: 15, fontWeight: "600" },
 
   field: { marginBottom: space.lg },
   fieldLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: color.text,
     marginBottom: space.sm,
   },
@@ -291,14 +299,14 @@ const styles = StyleSheet.create({
   inputMultiline: {
     height: 88,
     paddingTop: space.md,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   inputError: { borderColor: color.danger },
   fieldHint: { ...type.caption, marginTop: space.xs, fontSize: 12 },
   fieldError: { ...type.caption, marginTop: space.xs, fontSize: 12, color: color.danger },
 
   segmented: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: color.surfaceSunken,
     borderRadius: radius.sm,
     padding: 3,
@@ -308,20 +316,20 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 40,
     borderRadius: radius.sm - 3,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   segmentSelected: {
     backgroundColor: color.surface,
     ...shadow.card,
   },
-  segmentLabel: { fontSize: 13, fontWeight: '500', color: color.textMuted },
-  segmentLabelSelected: { color: color.text, fontWeight: '600' },
+  segmentLabel: { fontSize: 13, fontWeight: "500", color: color.textMuted },
+  segmentLabelSelected: { color: color.text, fontWeight: "600" },
 
   centered: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: space.xxl,
   },
 });

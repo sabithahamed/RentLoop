@@ -1,13 +1,13 @@
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, router } from 'expo-router';
+import React from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, router } from "expo-router";
 
-import { EmptyNote, Pill } from '@/components/lifecycle';
-import { Card, LoadingState } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatDate } from '@/data/ledger';
-import type { Reminder } from '@/data/lifecycleTypes';
-import { color, radius, space, type } from '@/theme';
+import { EmptyNote, Pill } from "@/components/lifecycle";
+import { Card, LoadingState } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatDate } from "@/data/ledger";
+import type { Reminder } from "@/data/lifecycleTypes";
+import { color, radius, space, type } from "@/theme";
 
 /**
  * Everything the app currently has a reason to nudge about.
@@ -28,13 +28,13 @@ export default function RemindersScreen() {
     [tenancyId, role],
   );
 
-  const urgent = reminders?.filter((r) => r.severity === 'urgent') ?? [];
-  const soon = reminders?.filter((r) => r.severity === 'soon') ?? [];
-  const info = reminders?.filter((r) => r.severity === 'info') ?? [];
+  const urgent = reminders?.filter((r) => r.severity === "urgent") ?? [];
+  const soon = reminders?.filter((r) => r.severity === "soon") ?? [];
+  const info = reminders?.filter((r) => r.severity === "info") ?? [];
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Reminders' }} />
+      <Stack.Screen options={{ title: "Reminders" }} />
       <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
         {loading && !reminders ? (
           <View style={styles.loading}>
@@ -43,8 +43,8 @@ export default function RemindersScreen() {
         ) : reminders && reminders.length > 0 ? (
           <>
             <Text style={[type.caption, styles.intro]}>
-              Worked out from your tenancy as it stands. Nothing here was typed in by hand, and
-              each one disappears when it is dealt with.
+              Worked out from your tenancy as it stands. Nothing here was typed in by hand, and each
+              one disappears when it is dealt with.
             </Text>
 
             {urgent.length > 0 ? <Group title="Needs attention" items={urgent} /> : null}
@@ -79,7 +79,7 @@ function Group({ title, items }: { title: string; items: Reminder[] }) {
 
 export function ReminderRow({ reminder }: { reminder: Reminder }) {
   const tone =
-    reminder.severity === 'urgent' ? 'bad' : reminder.severity === 'soon' ? 'warn' : 'neutral';
+    reminder.severity === "urgent" ? "bad" : reminder.severity === "soon" ? "warn" : "neutral";
 
   return (
     <Pressable
@@ -87,7 +87,7 @@ export function ReminderRow({ reminder }: { reminder: Reminder }) {
       onPress={() => router.push(reminder.route as never)}
       style={({ pressed }) => [
         styles.row,
-        reminder.severity === 'urgent' && styles.rowUrgent,
+        reminder.severity === "urgent" && styles.rowUrgent,
         pressed && styles.rowPressed,
       ]}
     >
@@ -103,7 +103,7 @@ export function ReminderRow({ reminder }: { reminder: Reminder }) {
                   : reminder.daysAway < 0
                     ? `${Math.abs(reminder.daysAway)} days ago`
                     : reminder.daysAway === 0
-                      ? 'Today'
+                      ? "Today"
                       : `in ${reminder.daysAway} days`
               }
               tone={tone}
@@ -125,8 +125,8 @@ const styles = StyleSheet.create({
   groupTitle: { ...type.label, marginBottom: space.sm },
   list: { gap: space.sm },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: space.md,
     backgroundColor: color.surface,
     borderRadius: radius.md,
@@ -134,11 +134,11 @@ const styles = StyleSheet.create({
     borderColor: color.border,
     padding: space.lg,
   },
-  rowUrgent: { borderColor: '#E8C4C4', backgroundColor: '#FEF9F9' },
+  rowUrgent: { borderColor: "#E8C4C4", backgroundColor: "#FEF9F9" },
   rowPressed: { backgroundColor: color.surfaceSunken },
   rowBody: { flex: 1, gap: space.xs },
-  rowTitle: { fontSize: 15, fontWeight: '600', color: color.text, lineHeight: 20 },
+  rowTitle: { fontSize: 15, fontWeight: "600", color: color.text, lineHeight: 20 },
   rowDetail: { fontSize: 13.5, color: color.textMuted, lineHeight: 19 },
-  rowMeta: { flexDirection: 'row', marginTop: space.xs },
+  rowMeta: { flexDirection: "row", marginTop: space.xs },
   chevron: { fontSize: 22, color: color.textFaint },
 });

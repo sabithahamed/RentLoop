@@ -16,7 +16,7 @@ import {
   formatPeriodMonth,
   generatePeriods,
   todayISO,
-} from '../ledger';
+} from "../ledger";
 import type {
   LandlordContact,
   LedgerRow,
@@ -29,13 +29,8 @@ import type {
   Tenancy,
   TenancySummary,
   UUID,
-} from '../types';
-import type {
-  Repository,
-  RecordPaymentInput,
-  Session,
-  SignUpInput,
-} from '../repository';
+} from "../types";
+import type { Repository, RecordPaymentInput, Session, SignUpInput } from "../repository";
 import type {
   Agreement,
   AreaComparison,
@@ -57,9 +52,9 @@ import type {
   Review,
   Role,
   Thread,
-} from '../lifecycleTypes';
-import { buildSeed, DEMO_EMAIL, DEMO_NAME, DEMO_USER_ID } from './seed';
-import { buildLifecycleSeed, mockPhoto, STANDARD_AREAS } from './lifecycleSeed';
+} from "../lifecycleTypes";
+import { buildSeed, DEMO_EMAIL, DEMO_NAME, DEMO_USER_ID } from "./seed";
+import { buildLifecycleSeed, mockPhoto, STANDARD_AREAS } from "./lifecycleSeed";
 
 const LATENCY_MS = 250;
 
@@ -124,8 +119,8 @@ function emptyState(session: Session | null): State {
     settlements: [],
     reviews: [],
     // Discovery and the landlord lens are not per-account in the prototype.
-    listings: buildLifecycleSeed('none', 'none').listings,
-    portfolio: buildLifecycleSeed('none', 'none').portfolio,
+    listings: buildLifecycleSeed("none", "none").listings,
+    portfolio: buildLifecycleSeed("none", "none").portfolio,
     renewals: [],
     invitations: [],
     enquiries: [],
@@ -177,14 +172,14 @@ function ensurePeriods(tenancy: Tenancy): void {
     if (existing.has(generated.period_month)) continue;
     state.periods.push({
       ...generated,
-      id: newId('period'),
+      id: newId("period"),
       created_at: new Date().toISOString(),
     });
   }
 }
 
 function requireSession(): Session {
-  if (!state.session) throw new Error('Not signed in');
+  if (!state.session) throw new Error("Not signed in");
   return state.session;
 }
 
@@ -200,16 +195,20 @@ export const mockRepository: Repository = {
     const isDemo = email.trim().toLowerCase() === DEMO_EMAIL;
     const session: Session = isDemo
       ? demoSession
-      : { userId: newId('user'), email: email.trim(), displayName: email.split('@')[0] || 'Tenant' };
+      : {
+          userId: newId("user"),
+          email: email.trim(),
+          displayName: email.split("@")[0] || "Tenant",
+        };
     state = isDemo ? seededState(session) : emptyState(session);
     return delay(session);
   },
 
   async signUp({ email, displayName }: SignUpInput) {
     const session: Session = {
-      userId: newId('user'),
+      userId: newId("user"),
       email: email.trim(),
-      displayName: displayName.trim() || 'Tenant',
+      displayName: displayName.trim() || "Tenant",
     };
     state = emptyState(session);
     return delay(session);
@@ -226,7 +225,7 @@ export const mockRepository: Repository = {
 
     // The active one — a user may have ended tenancies behind them.
     const tenancy =
-      state.tenancies.find((t) => t.owner_id === session.userId && t.status === 'active') ?? null;
+      state.tenancies.find((t) => t.owner_id === session.userId && t.status === "active") ?? null;
     if (!tenancy) return delay(null);
 
     const property = state.properties.find((p) => p.id === tenancy.property_id)!;
@@ -255,7 +254,7 @@ export const mockRepository: Repository = {
     const created_at = new Date().toISOString();
 
     const property: Property = {
-      id: newId('prop'),
+      id: newId("prop"),
       owner_id: session.userId,
       label: draft.propertyLabel.trim(),
       address_line: draft.addressLine.trim() || null,
@@ -264,7 +263,7 @@ export const mockRepository: Repository = {
     };
 
     const landlord: LandlordContact = {
-      id: newId('land'),
+      id: newId("land"),
       owner_id: session.userId,
       full_name: draft.landlordName.trim(),
       phone: draft.landlordPhone.trim() || null,
@@ -274,16 +273,16 @@ export const mockRepository: Repository = {
     };
 
     const tenancy: Tenancy = {
-      id: newId('ten'),
+      id: newId("ten"),
       owner_id: session.userId,
       property_id: property.id,
       landlord_contact_id: landlord.id,
       rent_amount_cents: draft.rentAmountCents,
-      currency: 'LKR',
+      currency: "LKR",
       due_day_of_month: draft.dueDayOfMonth,
       started_on: draft.startedOn,
       ended_on: null,
-      status: 'active',
+      status: "active",
       created_at,
     };
 
@@ -332,7 +331,7 @@ export const mockRepository: Repository = {
     if (!period) throw new Error(`Period ${input.rentPeriodId} not found`);
 
     const payment: Payment = {
-      id: newId('pay'),
+      id: newId("pay"),
       owner_id: session.userId,
       rent_period_id: period.id,
       tenancy_id: period.tenancy_id,
@@ -371,17 +370,17 @@ export const mockRepository: Repository = {
   async getOverview(tenancyId: UUID) {
     const agreement = state.agreements.find((a) => a.tenancy_id === tenancyId) ?? null;
     const moveIn = state.inspections.find(
-      (i) => i.tenancy_id === tenancyId && i.kind === 'move_in',
+      (i) => i.tenancy_id === tenancyId && i.kind === "move_in",
     );
     const moveOut = state.inspections.find(
-      (i) => i.tenancy_id === tenancyId && i.kind === 'move_out',
+      (i) => i.tenancy_id === tenancyId && i.kind === "move_out",
     );
 
     const today = todayISO();
-    const deadlines: LifecycleOverview['upcomingDeadlines'] = [];
+    const deadlines: LifecycleOverview["upcomingDeadlines"] = [];
     if (agreement?.endsOn) {
       deadlines.push({
-        label: 'Agreement ends',
+        label: "Agreement ends",
         on: agreement.endsOn,
         daysAway: daysBetween(today, agreement.endsOn),
       });
@@ -390,7 +389,7 @@ export const mockRepository: Repository = {
         notice.setUTCDate(notice.getUTCDate() - agreement.noticePeriodDays);
         const on = notice.toISOString().slice(0, 10);
         deadlines.push({
-          label: 'Last day to give notice',
+          label: "Last day to give notice",
           on,
           daysAway: daysBetween(today, on),
         });
@@ -399,11 +398,11 @@ export const mockRepository: Repository = {
     deadlines.sort((a, b) => a.daysAway - b.daysAway);
 
     return delay<LifecycleOverview>({
-      agreementStatus: agreement?.status ?? 'none',
-      moveInStatus: moveIn?.status ?? 'not_started',
-      moveOutStatus: moveOut?.status ?? 'not_started',
+      agreementStatus: agreement?.status ?? "none",
+      moveInStatus: moveIn?.status ?? "not_started",
+      moveOutStatus: moveOut?.status ?? "not_started",
       openTickets: state.tickets.filter(
-        (t) => t.tenancy_id === tenancyId && t.status !== 'resolved' && t.status !== 'declined',
+        (t) => t.tenancy_id === tenancyId && t.status !== "resolved" && t.status !== "declined",
       ).length,
       unreadThreads: state.threads.filter(
         (t) => t.tenancy_id === tenancyId && t.unreadFor.length > 0,
@@ -423,12 +422,12 @@ export const mockRepository: Repository = {
     // "extraction" is a fixed set of terms — enough to design the review screen,
     // which is the part that actually needs deciding.
     const agreement: Agreement = {
-      id: newId('agr'),
+      id: newId("agr"),
       tenancy_id: tenancyId,
       file_name: fileName,
       file_uri: null,
       uploaded_at: new Date().toISOString(),
-      status: 'needs_review',
+      status: "needs_review",
       endsOn: null,
       noticePeriodDays: null,
       depositCents: null,
@@ -441,13 +440,13 @@ export const mockRepository: Repository = {
 
   async confirmTerm(agreementId: UUID, termId: UUID, value: string) {
     const agreement = state.agreements.find((a) => a.id === agreementId);
-    if (!agreement) throw new Error('Agreement not found');
+    if (!agreement) throw new Error("Agreement not found");
     const term = agreement.terms.find((t) => t.id === termId);
     if (term) {
       term.value = value;
       term.confirmed = true;
     }
-    agreement.status = agreement.terms.every((t) => t.confirmed) ? 'confirmed' : 'needs_review';
+    agreement.status = agreement.terms.every((t) => t.confirmed) ? "confirmed" : "needs_review";
     return delay(agreement);
   },
 
@@ -457,17 +456,17 @@ export const mockRepository: Repository = {
     let session = state.inspections.find((i) => i.tenancy_id === tenancyId && i.kind === kind);
     if (!session) {
       // Start one lazily, with the standard checklist already laid out.
-      const sessionId = newId('insp');
+      const sessionId = newId("insp");
       session = {
         id: sessionId,
         tenancy_id: tenancyId,
         kind,
-        status: 'not_started',
+        status: "not_started",
         started_on: null,
         completed_on: null,
         suggestions: [],
         areas: STANDARD_AREAS.map((spec) => ({
-          id: newId('area'),
+          id: newId("area"),
           session_id: sessionId,
           name: spec.name,
           room: spec.room,
@@ -482,11 +481,11 @@ export const mockRepository: Repository = {
 
   async addInspectionPhoto(areaId: UUID, uri: string, note: string | null) {
     const session = state.inspections.find((i) => i.areas.some((a) => a.id === areaId));
-    if (!session) throw new Error('Inspection area not found');
+    if (!session) throw new Error("Inspection area not found");
     const area = session.areas.find((a) => a.id === areaId)!;
 
     area.photos.push({
-      id: newId('photo'),
+      id: newId("photo"),
       area_id: areaId,
       uri,
       captured_at: new Date().toISOString(),
@@ -494,8 +493,8 @@ export const mockRepository: Repository = {
       findings: [],
     });
 
-    if (session.status === 'not_started') {
-      session.status = 'in_progress';
+    if (session.status === "not_started") {
+      session.status = "in_progress";
       session.started_on = todayISO();
     }
     refreshInspectionSuggestions(session);
@@ -504,8 +503,8 @@ export const mockRepository: Repository = {
 
   async completeInspection(sessionId: UUID) {
     const session = state.inspections.find((i) => i.id === sessionId);
-    if (!session) throw new Error('Inspection not found');
-    session.status = 'complete';
+    if (!session) throw new Error("Inspection not found");
+    session.status = "complete";
     session.completed_on = todayISO();
     refreshInspectionSuggestions(session);
     return delay(session);
@@ -513,10 +512,10 @@ export const mockRepository: Repository = {
 
   async compareInspections(tenancyId: UUID) {
     const moveIn = state.inspections.find(
-      (i) => i.tenancy_id === tenancyId && i.kind === 'move_in',
+      (i) => i.tenancy_id === tenancyId && i.kind === "move_in",
     );
     const moveOut = state.inspections.find(
-      (i) => i.tenancy_id === tenancyId && i.kind === 'move_out',
+      (i) => i.tenancy_id === tenancyId && i.kind === "move_out",
     );
 
     const comparisons: AreaComparison[] = STANDARD_AREAS.map((spec) => {
@@ -531,7 +530,13 @@ export const mockRepository: Repository = {
         .filter((f) => !wasThere.has(f.label))
         .map((f) => ({ label: f.label, severity: f.severity, confidence: f.confidence }));
 
-      return { areaName: spec.name, room: spec.room, moveInPhoto: before, moveOutPhoto: after, changes };
+      return {
+        areaName: spec.name,
+        room: spec.room,
+        moveInPhoto: before,
+        moveOutPhoto: after,
+        changes,
+      };
     }).filter((c) => c.moveInPhoto || c.moveOutPhoto);
 
     return delay(comparisons);
@@ -548,12 +553,12 @@ export const mockRepository: Repository = {
 
   async getTicket(ticketId: UUID) {
     const ticket = state.tickets.find((t) => t.id === ticketId);
-    if (!ticket) throw new Error('Ticket not found');
+    if (!ticket) throw new Error("Ticket not found");
     return delay(ticket);
   },
 
   async createTicket(input) {
-    const ticketId = newId('tkt');
+    const ticketId = newId("tkt");
     const now = new Date().toISOString();
     const guess = classifyFromText(`${input.title} ${input.description}`);
 
@@ -564,14 +569,14 @@ export const mockRepository: Repository = {
       description: input.description,
       category: guess.category,
       urgency: guess.urgency,
-      status: 'reported',
+      status: "reported",
       reported_by: input.by,
       reported_on: todayISO(),
       photoUris: input.photoUris,
       costCents: null,
       suggestion: {
-        id: newId('ai'),
-        kind: 'classification',
+        id: newId("ai"),
+        kind: "classification",
         headline: guess.headline,
         detail: guess.detail,
         confidence: guess.confidence,
@@ -580,13 +585,13 @@ export const mockRepository: Repository = {
       },
       events: [
         {
-          id: newId('evt'),
+          id: newId("evt"),
           ticket_id: ticketId,
           at: now,
           by: input.by,
-          label: 'Reported the issue',
+          label: "Reported the issue",
           note: null,
-          status_after: 'reported',
+          status_after: "reported",
         },
       ],
     };
@@ -596,7 +601,7 @@ export const mockRepository: Repository = {
 
   async classifyTicket(ticketId: UUID, category: MaintenanceCategory, urgency: MaintenanceUrgency) {
     const ticket = state.tickets.find((t) => t.id === ticketId);
-    if (!ticket) throw new Error('Ticket not found');
+    if (!ticket) throw new Error("Ticket not found");
     ticket.category = category;
     ticket.urgency = urgency;
     if (ticket.suggestion) ticket.suggestion.acceptedAt = new Date().toISOString();
@@ -605,10 +610,10 @@ export const mockRepository: Repository = {
 
   async advanceTicket(ticketId: UUID, status: MaintenanceStatus, by: Role, note: string | null) {
     const ticket = state.tickets.find((t) => t.id === ticketId);
-    if (!ticket) throw new Error('Ticket not found');
+    if (!ticket) throw new Error("Ticket not found");
     ticket.status = status;
     ticket.events.push({
-      id: newId('evt'),
+      id: newId("evt"),
       ticket_id: ticketId,
       at: new Date().toISOString(),
       by,
@@ -628,7 +633,7 @@ export const mockRepository: Repository = {
 
   async getThread(threadId: UUID) {
     const thread = state.threads.find((t) => t.id === threadId);
-    if (!thread) throw new Error('Thread not found');
+    if (!thread) throw new Error("Thread not found");
     // Opening it is what marks it read.
     thread.unreadFor = [];
     return delay(thread);
@@ -636,16 +641,16 @@ export const mockRepository: Repository = {
 
   async sendMessage(threadId: UUID, by: Role, body: string) {
     const thread = state.threads.find((t) => t.id === threadId);
-    if (!thread) throw new Error('Thread not found');
+    if (!thread) throw new Error("Thread not found");
     const now = new Date().toISOString();
-    thread.messages.push({ id: newId('msg'), thread_id: threadId, by, body, sent_at: now });
+    thread.messages.push({ id: newId("msg"), thread_id: threadId, by, body, sent_at: now });
     thread.lastMessageAt = now;
-    thread.unreadFor = [by === 'tenant' ? 'landlord' : 'tenant'];
+    thread.unreadFor = [by === "tenant" ? "landlord" : "tenant"];
     return delay(thread);
   },
 
   async startThread(input) {
-    const threadId = newId('thr');
+    const threadId = newId("thr");
     const now = new Date().toISOString();
     const thread: Thread = {
       id: threadId,
@@ -653,10 +658,10 @@ export const mockRepository: Repository = {
       subject: input.subject,
       about: input.about,
       messages: [
-        { id: newId('msg'), thread_id: threadId, by: input.by, body: input.body, sent_at: now },
+        { id: newId("msg"), thread_id: threadId, by: input.by, body: input.body, sent_at: now },
       ],
       lastMessageAt: now,
-      unreadFor: [input.by === 'tenant' ? 'landlord' : 'tenant'],
+      unreadFor: [input.by === "tenant" ? "landlord" : "tenant"],
     };
     state.threads.push(thread);
     return delay(thread);
@@ -668,10 +673,10 @@ export const mockRepository: Repository = {
     let settlement = state.settlements.find((s) => s.tenancy_id === tenancyId);
     if (!settlement) {
       settlement = {
-        id: newId('set'),
+        id: newId("set"),
         tenancy_id: tenancyId,
         depositCents: 0,
-        status: 'not_started',
+        status: "not_started",
         deductions: [],
         settledOn: null,
       };
@@ -682,9 +687,9 @@ export const mockRepository: Repository = {
 
   async proposeDeduction(settlementId: UUID, input, by: Role) {
     const settlement = state.settlements.find((s) => s.id === settlementId);
-    if (!settlement) throw new Error('Settlement not found');
+    if (!settlement) throw new Error("Settlement not found");
     settlement.deductions.push({
-      id: newId('ded'),
+      id: newId("ded"),
       settlement_id: settlementId,
       label: input.label,
       amountCents: input.amountCents,
@@ -693,7 +698,7 @@ export const mockRepository: Repository = {
       proposedBy: by,
       agreed: null,
     });
-    if (settlement.status === 'not_started') settlement.status = 'proposed';
+    if (settlement.status === "not_started") settlement.status = "proposed";
     return delay(settlement);
   },
 
@@ -701,19 +706,19 @@ export const mockRepository: Repository = {
     const settlement = state.settlements.find((s) =>
       s.deductions.some((d) => d.id === deductionId),
     );
-    if (!settlement) throw new Error('Deduction not found');
+    if (!settlement) throw new Error("Deduction not found");
     settlement.deductions.find((d) => d.id === deductionId)!.agreed = agreed;
 
     const answered = settlement.deductions.every((d) => d.agreed !== null);
     const anyRejected = settlement.deductions.some((d) => d.agreed === false);
-    settlement.status = !answered ? 'disputed' : anyRejected ? 'disputed' : 'agreed';
+    settlement.status = !answered ? "disputed" : anyRejected ? "disputed" : "agreed";
     return delay(settlement);
   },
 
   async settleDeposit(settlementId: UUID) {
     const settlement = state.settlements.find((s) => s.id === settlementId);
-    if (!settlement) throw new Error('Settlement not found');
-    settlement.status = 'settled';
+    if (!settlement) throw new Error("Settlement not found");
+    settlement.status = "settled";
     settlement.settledOn = todayISO();
     return delay(settlement);
   },
@@ -726,7 +731,7 @@ export const mockRepository: Repository = {
 
   async leaveReview(input) {
     const review: Review = {
-      id: newId('rev'),
+      id: newId("rev"),
       tenancy_id: input.tenancyId,
       direction: input.direction,
       rating: input.rating,
@@ -752,7 +757,7 @@ export const mockRepository: Repository = {
       const agreement = state.agreements.find((a) => a.tenancy_id === tenancyId);
       renewal = {
         tenancy_id: tenancyId,
-        intent: 'undecided',
+        intent: "undecided",
         noticeGivenOn: null,
         earliestLeaveDate: null,
         decidedOn: null,
@@ -770,7 +775,7 @@ export const mockRepository: Repository = {
     const renewal = await this.getRenewal(tenancyId);
     renewal.intent = intent;
     renewal.decidedOn = todayISO();
-    renewal.noticeGivenOn = intent === 'leaving' ? todayISO() : null;
+    renewal.noticeGivenOn = intent === "leaving" ? todayISO() : null;
     return delay(renewal);
   },
 
@@ -783,11 +788,11 @@ export const mockRepository: Repository = {
       const landlord = state.landlords.find((l) => l.id === tenancy?.landlord_contact_id);
       invitation = {
         tenancy_id: tenancyId,
-        status: 'none',
+        status: "none",
         code: makeInviteCode(),
         sentOn: null,
         acceptedOn: null,
-        invitedName: landlord?.full_name ?? 'your landlord',
+        invitedName: landlord?.full_name ?? "your landlord",
       };
       state.invitations.push(invitation);
     }
@@ -796,21 +801,21 @@ export const mockRepository: Repository = {
 
   async sendInvitation(tenancyId: UUID) {
     const invitation = await this.getInvitation(tenancyId);
-    invitation.status = 'sent';
+    invitation.status = "sent";
     invitation.sentOn = todayISO();
     return delay(invitation);
   },
 
   async acceptInvitation(tenancyId: UUID) {
     const invitation = await this.getInvitation(tenancyId);
-    invitation.status = 'accepted';
+    invitation.status = "accepted";
     invitation.acceptedOn = todayISO();
 
     // This is what connected mode actually means in the data: the contact stops
     // being just a name and starts being a user.
     const tenancy = state.tenancies.find((t) => t.id === tenancyId);
     const landlord = state.landlords.find((l) => l.id === tenancy?.landlord_contact_id);
-    if (landlord) landlord.linked_user_id = newId('user');
+    if (landlord) landlord.linked_user_id = newId("user");
 
     return delay(invitation);
   },
@@ -834,7 +839,7 @@ export const mockRepository: Repository = {
 
   async getListing(listingId: UUID) {
     const listing = state.listings.find((l) => l.id === listingId);
-    if (!listing) throw new Error('Listing not found');
+    if (!listing) throw new Error("Listing not found");
     return delay(listing);
   },
 
@@ -850,7 +855,7 @@ export const mockRepository: Repository = {
 
   async getPortfolioEntry(tenancyId: UUID) {
     const entry = state.portfolio.find((p) => p.tenancyId === tenancyId);
-    if (!entry) throw new Error('Property not found');
+    if (!entry) throw new Error("Property not found");
     return delay(entry);
   },
 };
@@ -867,15 +872,16 @@ function shiftDays(from: string, days: number): string {
 
 function makeInviteCode(): string {
   // Readable over the phone: no O/0, no I/1.
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  return Array.from({ length: 6 }, () =>
-    alphabet[Math.floor(Math.random() * alphabet.length)],
-  ).join('');
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return Array.from(
+    { length: 6 },
+    () => alphabet[Math.floor(Math.random() * alphabet.length)],
+  ).join("");
 }
 
 function buildReceipt(paymentId: UUID) {
   const payment = state.payments.find((p) => p.id === paymentId);
-  if (!payment) throw new Error('Payment not found');
+  if (!payment) throw new Error("Payment not found");
 
   const period = state.periods.find((p) => p.id === payment.rent_period_id);
   const tenancy = state.tenancies.find((t) => t.id === payment.tenancy_id);
@@ -886,19 +892,19 @@ function buildReceipt(paymentId: UUID) {
     paymentId,
     // Stable and human-quotable: the payment id is not something to read aloud.
     // Punctuation is stripped first so the suffix cannot come out as "Y-14".
-    reference: `RL-${payment.paid_on.replace(/-/g, '')}-${paymentId
-      .replace(/[^a-z0-9]/gi, '')
+    reference: `RL-${payment.paid_on.replace(/-/g, "")}-${paymentId
+      .replace(/[^a-z0-9]/gi, "")
       .slice(-4)
       .toUpperCase()
-      .padStart(4, '0')}`,
+      .padStart(4, "0")}`,
     issuedOn: state.issuedReceipts[paymentId] ?? null,
     issuedBy: state.issuedReceipts[paymentId] ? (landlord?.full_name ?? null) : null,
     amountCents: payment.amount_cents,
     paidOn: payment.paid_on,
-    periodLabel: period ? formatPeriodMonth(period.period_month) : 'Unknown month',
-    propertyLabel: property?.label ?? 'Property',
-    tenantName: state.session?.displayName ?? 'Tenant',
-    landlordName: landlord?.full_name ?? 'Landlord',
+    periodLabel: period ? formatPeriodMonth(period.period_month) : "Unknown month",
+    propertyLabel: property?.label ?? "Property",
+    tenantName: state.session?.displayName ?? "Tenant",
+    landlordName: landlord?.full_name ?? "Landlord",
     method: payment.method,
   };
 }
@@ -922,32 +928,32 @@ function buildReminders(tenancyId: UUID, forRole: Role): Reminder[] {
     const summary = summarise(period, state.payments);
     const status = deriveLedgerStatus(summary);
 
-    if (status === 'overdue' || status === 'partial') {
+    if (status === "overdue" || status === "partial") {
       reminders.push({
         id: `rent-late-${period.id}`,
-        kind: 'rent_overdue',
+        kind: "rent_overdue",
         title:
-          status === 'overdue'
+          status === "overdue"
             ? `${formatPeriodMonth(period.period_month)} rent is unpaid`
             : `${formatPeriodMonth(period.period_month)} is part paid`,
         detail: `${formatLKR(summary.balance_cents)} outstanding. Due ${formatDate(period.due_date)}.`,
-        severity: 'urgent',
+        severity: "urgent",
         on: period.due_date,
         daysAway: daysBetween(today, period.due_date),
         route: `/period/${period.id}`,
-        forRole: 'tenant',
+        forRole: "tenant",
       });
-    } else if (status === 'due') {
+    } else if (status === "due") {
       reminders.push({
         id: `rent-due-${period.id}`,
-        kind: 'rent_due',
+        kind: "rent_due",
         title: `${formatPeriodMonth(period.period_month)} rent is due soon`,
         detail: `${formatLKR(summary.amount_due_cents)} due ${formatDate(period.due_date)}.`,
-        severity: 'soon',
+        severity: "soon",
         on: period.due_date,
         daysAway: daysBetween(today, period.due_date),
         route: `/period/${period.id}`,
-        forRole: 'tenant',
+        forRole: "tenant",
       });
     }
   }
@@ -960,87 +966,85 @@ function buildReminders(tenancyId: UUID, forRole: Role): Reminder[] {
       const noticeBy = shiftDays(agreement.endsOn, -agreement.noticePeriodDays);
       const daysToNotice = daysBetween(today, noticeBy);
       const renewal = state.renewals.find((r) => r.tenancy_id === tenancyId);
-      if (daysToNotice >= 0 && (!renewal || renewal.intent === 'undecided')) {
+      if (daysToNotice >= 0 && (!renewal || renewal.intent === "undecided")) {
         reminders.push({
-          id: 'notice-deadline',
-          kind: 'notice_deadline',
-          title: 'Decide whether you are staying',
+          id: "notice-deadline",
+          kind: "notice_deadline",
+          title: "Decide whether you are staying",
           detail: `If you want to leave when the agreement ends, you must give notice by ${formatDate(noticeBy)}.`,
-          severity: daysToNotice < 45 ? 'urgent' : 'info',
+          severity: daysToNotice < 45 ? "urgent" : "info",
           on: noticeBy,
           daysAway: daysToNotice,
-          route: '/renewal',
-          forRole: 'tenant',
+          route: "/renewal",
+          forRole: "tenant",
         });
       }
     }
     if (daysToEnd >= 0 && daysToEnd < 120) {
       reminders.push({
-        id: 'agreement-ending',
-        kind: 'agreement_ending',
-        title: 'Agreement ends soon',
+        id: "agreement-ending",
+        kind: "agreement_ending",
+        title: "Agreement ends soon",
         detail: `Your tenancy agreement runs to ${formatDate(agreement.endsOn)}.`,
-        severity: daysToEnd < 60 ? 'soon' : 'info',
+        severity: daysToEnd < 60 ? "soon" : "info",
         on: agreement.endsOn,
         daysAway: daysToEnd,
-        route: '/agreement',
-        forRole: 'tenant',
+        route: "/agreement",
+        forRole: "tenant",
       });
     }
   }
 
-  if (agreement && agreement.status === 'needs_review') {
+  if (agreement && agreement.status === "needs_review") {
     const unconfirmed = agreement.terms.filter((t) => !t.confirmed).length;
     reminders.push({
-      id: 'agreement-unconfirmed',
-      kind: 'agreement_unconfirmed',
-      title: `${unconfirmed} agreement ${unconfirmed === 1 ? 'term needs' : 'terms need'} confirming`,
-      detail: 'Confirmed terms become your reminders. Unconfirmed ones do nothing.',
-      severity: 'info',
+      id: "agreement-unconfirmed",
+      kind: "agreement_unconfirmed",
+      title: `${unconfirmed} agreement ${unconfirmed === 1 ? "term needs" : "terms need"} confirming`,
+      detail: "Confirmed terms become your reminders. Unconfirmed ones do nothing.",
+      severity: "info",
       on: null,
       daysAway: null,
-      route: '/agreement',
-      forRole: 'tenant',
+      route: "/agreement",
+      forRole: "tenant",
     });
   }
 
   // Repairs — whoever is holding it up
   for (const ticket of state.tickets.filter((t) => t.tenancy_id === tenancyId)) {
-    if (ticket.status === 'reported') {
+    if (ticket.status === "reported") {
       reminders.push({
         id: `repair-${ticket.id}`,
-        kind: 'repair_waiting',
+        kind: "repair_waiting",
         title:
-          forRole === 'landlord'
+          forRole === "landlord"
             ? `A repair needs your decision`
-            : 'Your landlord has not responded yet',
+            : "Your landlord has not responded yet",
         detail: ticket.title,
-        severity: ticket.urgency === 'emergency' ? 'urgent' : 'soon',
+        severity: ticket.urgency === "emergency" ? "urgent" : "soon",
         on: ticket.reported_on,
         daysAway: daysBetween(today, ticket.reported_on),
         route: `/maintenance/${ticket.id}`,
-        forRole: forRole === 'landlord' ? 'landlord' : 'tenant',
+        forRole: forRole === "landlord" ? "landlord" : "tenant",
       });
     }
   }
 
   // Evidence gaps
-  const moveIn = state.inspections.find(
-    (i) => i.tenancy_id === tenancyId && i.kind === 'move_in',
-  );
+  const moveIn = state.inspections.find((i) => i.tenancy_id === tenancyId && i.kind === "move_in");
   if (moveIn) {
     const missing = moveIn.areas.filter((a) => a.required && a.photos.length === 0).length;
     if (missing > 0) {
       reminders.push({
-        id: 'move-in-incomplete',
-        kind: 'inspection_incomplete',
-        title: `${missing} move-in ${missing === 1 ? 'area was' : 'areas were'} never photographed`,
-        detail: 'Gaps in the move-in record are what deposit arguments are made of.',
-        severity: 'info',
+        id: "move-in-incomplete",
+        kind: "inspection_incomplete",
+        title: `${missing} move-in ${missing === 1 ? "area was" : "areas were"} never photographed`,
+        detail: "Gaps in the move-in record are what deposit arguments are made of.",
+        severity: "info",
         on: null,
         daysAway: null,
-        route: '/inspection/move_in',
-        forRole: 'tenant',
+        route: "/inspection/move_in",
+        forRole: "tenant",
       });
     }
   }
@@ -1051,31 +1055,31 @@ function buildReminders(tenancyId: UUID, forRole: Role): Reminder[] {
     if (unanswered > 0) {
       reminders.push({
         id: `deposit-${settlement.id}`,
-        kind: 'deposit_unanswered',
-        title: `${unanswered} deposit ${unanswered === 1 ? 'deduction needs' : 'deductions need'} an answer`,
-        detail: 'Your deposit is not settled until you respond to each one.',
-        severity: 'soon',
+        kind: "deposit_unanswered",
+        title: `${unanswered} deposit ${unanswered === 1 ? "deduction needs" : "deductions need"} an answer`,
+        detail: "Your deposit is not settled until you respond to each one.",
+        severity: "soon",
         on: null,
         daysAway: null,
         route: `/deposit?tenancyId=${settlement.tenancy_id}`,
-        forRole: 'tenant',
+        forRole: "tenant",
       });
     }
   }
 
-  const weight: Record<Reminder['severity'], number> = { urgent: 0, soon: 1, info: 2 };
+  const weight: Record<Reminder["severity"], number> = { urgent: 0, soon: 1, info: 2 };
   return reminders
     .filter((r) => r.forRole === forRole)
     .sort((a, b) => weight[a.severity] - weight[b.severity]);
 }
 
 const STATUS_EVENT_LABEL: Record<MaintenanceStatus, string> = {
-  reported: 'Reported the issue',
-  acknowledged: 'Acknowledged',
-  approved: 'Approved the repair',
-  in_progress: 'Work started',
-  resolved: 'Marked resolved',
-  declined: 'Declined',
+  reported: "Reported the issue",
+  acknowledged: "Acknowledged",
+  approved: "Approved the repair",
+  in_progress: "Work started",
+  resolved: "Marked resolved",
+  declined: "Declined",
 };
 
 /**
@@ -1095,63 +1099,63 @@ function classifyFromText(text: string): {
   const t = text.toLowerCase();
   const has = (...words: string[]): boolean => words.some((w) => t.includes(w));
 
-  if (has('leak', 'water', 'tap', 'pipe', 'drip', 'flood', 'drain')) {
-    const urgent = has('flood', 'burst', 'everywhere');
+  if (has("leak", "water", "tap", "pipe", "drip", "flood", "drain")) {
+    const urgent = has("flood", "burst", "everywhere");
     return {
-      category: 'plumbing',
-      urgency: urgent ? 'emergency' : 'normal',
-      headline: urgent ? 'Plumbing — looks urgent' : 'Plumbing',
+      category: "plumbing",
+      urgency: urgent ? "emergency" : "normal",
+      headline: urgent ? "Plumbing — looks urgent" : "Plumbing",
       detail: urgent
-        ? 'Escaping water damages the property quickly. Raised to emergency so it is not queued behind routine work.'
-        : 'Classified as plumbing. Adjust it if that is wrong.',
+        ? "Escaping water damages the property quickly. Raised to emergency so it is not queued behind routine work."
+        : "Classified as plumbing. Adjust it if that is wrong.",
       confidence: 0.79,
     };
   }
-  if (has('electric', 'socket', 'wiring', 'shock', 'power', 'switch', 'spark')) {
-    const urgent = has('shock', 'spark', 'burn');
+  if (has("electric", "socket", "wiring", "shock", "power", "switch", "spark")) {
+    const urgent = has("shock", "spark", "burn");
     return {
-      category: 'electrical',
-      urgency: urgent ? 'emergency' : 'high',
-      headline: urgent ? 'Electrical — safety risk' : 'Electrical',
+      category: "electrical",
+      urgency: urgent ? "emergency" : "high",
+      headline: urgent ? "Electrical — safety risk" : "Electrical",
       detail: urgent
-        ? 'Anything involving shocks or sparks is a safety issue. Please do not use the fitting until it has been looked at.'
-        : 'Electrical faults tend to get worse, so this was raised to high.',
+        ? "Anything involving shocks or sparks is a safety issue. Please do not use the fitting until it has been looked at."
+        : "Electrical faults tend to get worse, so this was raised to high.",
       confidence: 0.74,
     };
   }
-  if (has('damp', 'mould', 'mold', 'crack', 'ceiling', 'wall', 'roof')) {
+  if (has("damp", "mould", "mold", "crack", "ceiling", "wall", "roof")) {
     return {
-      category: 'structural',
-      urgency: 'high',
-      headline: 'Structural — worth acting on early',
+      category: "structural",
+      urgency: "high",
+      headline: "Structural — worth acting on early",
       detail:
-        'Damp and cracks spread, and the repair cost grows with them. Raised to high so it does not sit.',
+        "Damp and cracks spread, and the repair cost grows with them. Raised to high so it does not sit.",
       confidence: 0.71,
     };
   }
-  if (has('fridge', 'oven', 'washing', 'machine', 'heater', 'ac', 'air condition')) {
+  if (has("fridge", "oven", "washing", "machine", "heater", "ac", "air condition")) {
     return {
-      category: 'appliance',
-      urgency: 'normal',
-      headline: 'Appliance',
-      detail: 'Classified as an appliance fault.',
+      category: "appliance",
+      urgency: "normal",
+      headline: "Appliance",
+      detail: "Classified as an appliance fault.",
       confidence: 0.68,
     };
   }
-  if (has('rat', 'mice', 'cockroach', 'termite', 'ants', 'pest')) {
+  if (has("rat", "mice", "cockroach", "termite", "ants", "pest")) {
     return {
-      category: 'pest',
-      urgency: 'high',
-      headline: 'Pests — usually gets worse quickly',
-      detail: 'Infestations spread. Raised to high.',
+      category: "pest",
+      urgency: "high",
+      headline: "Pests — usually gets worse quickly",
+      detail: "Infestations spread. Raised to high.",
       confidence: 0.7,
     };
   }
   return {
-    category: 'other',
-    urgency: 'normal',
-    headline: 'Could not classify this confidently',
-    detail: 'Pick a category yourself so your landlord can see what kind of issue this is.',
+    category: "other",
+    urgency: "normal",
+    headline: "Could not classify this confidently",
+    detail: "Pick a category yourself so your landlord can see what kind of issue this is.",
     confidence: 0.31,
   };
 }
@@ -1161,10 +1165,10 @@ function refreshInspectionSuggestions(session: InspectionSession): void {
   const missing = session.areas.filter((a) => a.required && a.photos.length === 0);
 
   session.suggestions = missing.slice(0, 3).map((area) => ({
-    id: newId('ai'),
-    kind: 'missing_area' as const,
+    id: newId("ai"),
+    kind: "missing_area" as const,
     headline: `${area.room} — ${area.name.toLowerCase()} not photographed`,
-    detail: MISSING_AREA_REASON[area.name] ?? 'This is a commonly disputed area at move-out.',
+    detail: MISSING_AREA_REASON[area.name] ?? "This is a commonly disputed area at move-out.",
     confidence: 0.9,
     acceptedAt: null,
     rejectedAt: null,
@@ -1172,14 +1176,16 @@ function refreshInspectionSuggestions(session: InspectionSession): void {
 }
 
 const MISSING_AREA_REASON: Record<string, string> = {
-  Ceiling: 'Ceilings are where damp appears first, and the hardest thing to argue about later.',
-  'Electricity meter': 'A meter reading at move-in settles any argument about unpaid utility bills.',
-  'Water meter': 'Same as the electricity meter — a photo now is one less dispute at move-out.',
-  'Windows and locks': 'Latches and handles break during a tenancy and are routinely charged for.',
-  'Sink and taps': 'Existing chips and stains get blamed on the tenant if they are not recorded.',
-  Walls: 'Marks and scuffs are the single most common deduction from a deposit.',
-  Floor: 'Scratches and stains on flooring are frequently disputed.',
-  'Toilet and fittings': 'Cracks in ceramic are expensive and easy to blame on whoever leaves last.',
+  Ceiling: "Ceilings are where damp appears first, and the hardest thing to argue about later.",
+  "Electricity meter":
+    "A meter reading at move-in settles any argument about unpaid utility bills.",
+  "Water meter": "Same as the electricity meter — a photo now is one less dispute at move-out.",
+  "Windows and locks": "Latches and handles break during a tenancy and are routinely charged for.",
+  "Sink and taps": "Existing chips and stains get blamed on the tenant if they are not recorded.",
+  Walls: "Marks and scuffs are the single most common deduction from a deposit.",
+  Floor: "Scratches and stains on flooring are frequently disputed.",
+  "Toilet and fittings":
+    "Cracks in ceramic are expensive and easy to blame on whoever leaves last.",
 };
 
 /** Photo placeholder helper, re-exported so screens can seed capture flows. */

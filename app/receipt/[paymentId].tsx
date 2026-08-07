@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import React, { useState } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, useLocalSearchParams } from "expo-router";
 
-import { Pill } from '@/components/lifecycle';
-import { Button, Card, ErrorState, LoadingState } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatDate, formatLKR } from '@/data/ledger';
-import { PAYMENT_METHOD_LABELS, type PaymentMethod } from '@/data/types';
-import type { Receipt } from '@/data/lifecycleTypes';
-import { color, radius, space, type } from '@/theme';
+import { Pill } from "@/components/lifecycle";
+import { Button, Card, ErrorState, LoadingState } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatDate, formatLKR } from "@/data/ledger";
+import { PAYMENT_METHOD_LABELS, type PaymentMethod } from "@/data/types";
+import type { Receipt } from "@/data/lifecycleTypes";
+import { color, radius, space, type } from "@/theme";
 
 /**
  * A digital receipt.
@@ -22,10 +22,11 @@ export default function ReceiptScreen() {
   const { paymentId } = useLocalSearchParams<{ paymentId: string }>();
   const { repo, role, invalidate } = useApp();
 
-  const { data: receipt, loading, error } = useAsync<Receipt>(
-    () => repo.getReceipt(paymentId),
-    [paymentId],
-  );
+  const {
+    data: receipt,
+    loading,
+    error,
+  } = useAsync<Receipt>(() => repo.getReceipt(paymentId), [paymentId]);
 
   const [busy, setBusy] = useState(false);
 
@@ -47,7 +48,7 @@ export default function ReceiptScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Receipt' }} />
+      <Stack.Screen options={{ title: "Receipt" }} />
       <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
         <View style={[styles.paper, !issued && styles.paperDraft]}>
           <View style={styles.header}>
@@ -55,7 +56,7 @@ export default function ReceiptScreen() {
               <Text style={styles.brand}>RENTLOOP</Text>
               <Text style={styles.docType}>RENT RECEIPT</Text>
             </View>
-            <Pill label={issued ? 'Issued' : 'Not issued'} tone={issued ? 'good' : 'warn'} />
+            <Pill label={issued ? "Issued" : "Not issued"} tone={issued ? "good" : "warn"} />
           </View>
 
           <Text style={styles.reference}>{receipt.reference}</Text>
@@ -94,7 +95,7 @@ export default function ReceiptScreen() {
           )}
         </View>
 
-        {role === 'landlord' && !issued ? (
+        {role === "landlord" && !issued ? (
           <Button
             label="Confirm I received this"
             onPress={issue}
@@ -104,8 +105,8 @@ export default function ReceiptScreen() {
         ) : null}
 
         <Text style={styles.footnote}>
-          Sharing and PDF export are not built. On a real receipt this is where you would send it
-          to yourself, or to whoever is asking for proof of rent.
+          Sharing and PDF export are not built. On a real receipt this is where you would send it to
+          yourself, or to whoever is asking for proof of rent.
         </Text>
       </ScrollView>
     </>
@@ -132,20 +133,20 @@ const styles = StyleSheet.create({
     borderColor: color.borderStrong,
     padding: space.xl,
   },
-  paperDraft: { borderStyle: 'dashed' },
+  paperDraft: { borderStyle: "dashed" },
   header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
     gap: space.md,
   },
-  brand: { fontSize: 15, fontWeight: '700', letterSpacing: 2, color: color.accent },
+  brand: { fontSize: 15, fontWeight: "700", letterSpacing: 2, color: color.accent },
   docType: { ...type.label, marginTop: 2 },
   reference: {
     fontSize: 12,
     color: color.textFaint,
     marginTop: space.md,
-    fontVariant: ['tabular-nums'],
+    fontVariant: ["tabular-nums"],
   },
 
   amountBlock: {
@@ -157,18 +158,23 @@ const styles = StyleSheet.create({
   },
   amount: { ...type.moneyLarge, fontSize: 30, marginTop: space.xs },
 
-  row: { flexDirection: 'row', justifyContent: 'space-between', gap: space.lg, paddingVertical: space.sm },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: space.lg,
+    paddingVertical: space.sm,
+  },
   rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: color.border },
   rowLabel: { fontSize: 13.5, color: color.textMuted },
-  rowValue: { flex: 1, fontSize: 13.5, color: color.text, fontWeight: '500', textAlign: 'right' },
+  rowValue: { flex: 1, fontSize: 13.5, color: color.text, fontWeight: "500", textAlign: "right" },
 
   issuedBlock: {
     marginTop: space.lg,
-    backgroundColor: '#E6F2EB',
+    backgroundColor: "#E6F2EB",
     borderRadius: radius.sm,
     padding: space.md,
   },
-  issuedText: { fontSize: 13, color: '#1B5E3F', lineHeight: 19 },
+  issuedText: { fontSize: 13, color: "#1B5E3F", lineHeight: 19 },
   draftBlock: {
     marginTop: space.lg,
     backgroundColor: color.surfaceSunken,
@@ -178,5 +184,11 @@ const styles = StyleSheet.create({
   draftText: { fontSize: 13, color: color.textMuted, lineHeight: 19 },
 
   action: { marginTop: space.xl },
-  footnote: { ...type.caption, fontSize: 12, marginTop: space.xl, lineHeight: 18, fontStyle: 'italic' },
+  footnote: {
+    ...type.caption,
+    fontSize: 12,
+    marginTop: space.xl,
+    lineHeight: 18,
+    fontStyle: "italic",
+  },
 });

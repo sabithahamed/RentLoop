@@ -1,13 +1,13 @@
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, router } from 'expo-router';
+import React from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, router } from "expo-router";
 
-import { Pill, Stars } from '@/components/lifecycle';
-import { Card, LoadingState } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatLKR } from '@/data/ledger';
-import type { Listing } from '@/data/lifecycleTypes';
-import { color, radius, space, type } from '@/theme';
+import { Pill, Stars } from "@/components/lifecycle";
+import { Card, LoadingState } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatLKR } from "@/data/ledger";
+import type { Listing } from "@/data/lifecycleTypes";
+import { color, radius, space, type } from "@/theme";
 
 /**
  * Discovery — deliberately the thinnest surface in the app.
@@ -22,7 +22,7 @@ export default function DiscoverScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Find a place' }} />
+      <Stack.Screen options={{ title: "Find a place" }} />
       <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
         <Card>
           <Text style={type.heading}>Rent from someone with a record</Text>
@@ -63,7 +63,7 @@ export default function DiscoverScreen() {
                       <View style={styles.ratingRow}>
                         <Stars rating={listing.landlordRating} size={13} />
                         <Text style={styles.ratingText}>
-                          {listing.landlordRating.toFixed(1)} · {listing.landlordTenancyCount}{' '}
+                          {listing.landlordRating.toFixed(1)} · {listing.landlordTenancyCount}{" "}
                           completed tenancies
                         </Text>
                       </View>
@@ -101,21 +101,27 @@ const styles = StyleSheet.create({
     padding: space.lg,
   },
   cardPressed: { backgroundColor: color.surfaceSunken },
-  cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
-  title: { fontSize: 15.5, fontWeight: '600', color: color.text },
+  cardTop: { flexDirection: "row", alignItems: "flex-start", gap: space.md },
+  title: { fontSize: 15.5, fontWeight: "600", color: color.text },
   location: { fontSize: 13, color: color.textMuted, marginTop: 2 },
   landlord: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: space.md,
     marginTop: space.md,
     paddingTop: space.md,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: color.border,
   },
-  landlordName: { fontSize: 13.5, fontWeight: '600', color: color.text },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 2 },
+  landlordName: { fontSize: 13.5, fontWeight: "600", color: color.text },
+  ratingRow: { flexDirection: "row", alignItems: "center", gap: space.sm, marginTop: 2 },
   ratingText: { fontSize: 12, color: color.textMuted },
-  noHistory: { fontSize: 12, color: color.textFaint, marginTop: 2, fontStyle: 'italic' },
-  footnote: { ...type.caption, fontSize: 12, marginTop: space.xl, lineHeight: 18, fontStyle: 'italic' },
+  noHistory: { fontSize: 12, color: color.textFaint, marginTop: 2, fontStyle: "italic" },
+  footnote: {
+    ...type.caption,
+    fontSize: 12,
+    marginTop: space.xl,
+    lineHeight: 18,
+    fontStyle: "italic",
+  },
 });

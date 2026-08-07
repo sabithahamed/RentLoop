@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import React, { useState } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 
-import { AiCard, AiDisclaimer, actorName, PhotoRow, Pill, Timeline } from '@/components/lifecycle';
-import { Button, Card, ErrorState, LoadingState, SectionLabel } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatDate, formatLKR } from '@/data/ledger';
+import { AiCard, AiDisclaimer, actorName, PhotoRow, Pill, Timeline } from "@/components/lifecycle";
+import { Button, Card, ErrorState, LoadingState, SectionLabel } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatDate, formatLKR } from "@/data/ledger";
 import {
   CATEGORY_LABEL,
   MAINTENANCE_STATUS_LABEL,
@@ -13,9 +13,9 @@ import {
   NEXT_STATUSES,
   URGENCY_LABEL,
   URGENCY_TONE,
-} from '@/data/maintenanceLabels';
-import type { MaintenanceStatus, MaintenanceTicket } from '@/data/lifecycleTypes';
-import { color, space, type } from '@/theme';
+} from "@/data/maintenanceLabels";
+import type { MaintenanceStatus, MaintenanceTicket } from "@/data/lifecycleTypes";
+import { color, space, type } from "@/theme";
 
 /**
  * One maintenance issue — the same record from both sides.
@@ -28,10 +28,11 @@ export default function TicketScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { repo, role, invalidate } = useApp();
 
-  const { data: ticket, loading, error } = useAsync<MaintenanceTicket>(
-    () => repo.getTicket(id),
-    [id],
-  );
+  const {
+    data: ticket,
+    loading,
+    error,
+  } = useAsync<MaintenanceTicket>(() => repo.getTicket(id), [id]);
 
   const [busy, setBusy] = useState(false);
 
@@ -64,7 +65,7 @@ export default function TicketScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Repair' }} />
+      <Stack.Screen options={{ title: "Repair" }} />
       <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
         <Card>
           <Text style={type.title}>{ticket.title}</Text>
@@ -77,16 +78,14 @@ export default function TicketScreen() {
             <Pill label={URGENCY_LABEL[ticket.urgency]} tone={URGENCY_TONE[ticket.urgency]} />
           </View>
 
-          {ticket.description ? (
-            <Text style={styles.description}>{ticket.description}</Text>
-          ) : null}
+          {ticket.description ? <Text style={styles.description}>{ticket.description}</Text> : null}
 
           <Text style={styles.meta}>
-            Reported {formatDate(ticket.reported_on)} by{' '}
-            {actorName(ticket.reported_by, role).toLowerCase() === 'you'
-              ? 'you'
+            Reported {formatDate(ticket.reported_on)} by{" "}
+            {actorName(ticket.reported_by, role).toLowerCase() === "you"
+              ? "you"
               : `the ${ticket.reported_by}`}
-            {ticket.costCents !== null ? ` · cost ${formatLKR(ticket.costCents)}` : ''}
+            {ticket.costCents !== null ? ` · cost ${formatLKR(ticket.costCents)}` : ""}
           </Text>
         </Card>
 
@@ -120,7 +119,7 @@ export default function TicketScreen() {
           />
         </Card>
 
-        {role === 'landlord' && next.length > 0 ? (
+        {role === "landlord" && next.length > 0 ? (
           <>
             <SectionLabel>Your move</SectionLabel>
             <View style={styles.actions}>
@@ -128,7 +127,7 @@ export default function TicketScreen() {
                 <Button
                   key={status}
                   label={ACTION_LABEL[status]}
-                  variant={status === 'declined' ? 'danger' : 'primary'}
+                  variant={status === "declined" ? "danger" : "primary"}
                   onPress={() => advance(status)}
                   disabled={busy}
                 />
@@ -137,11 +136,11 @@ export default function TicketScreen() {
           </>
         ) : null}
 
-        {role === 'tenant' && ticket.status !== 'resolved' ? (
+        {role === "tenant" && ticket.status !== "resolved" ? (
           <Button
             label="Message about this"
             variant="secondary"
-            onPress={() => router.push('/thread')}
+            onPress={() => router.push("/thread")}
             style={styles.message}
           />
         ) : null}
@@ -153,18 +152,18 @@ export default function TicketScreen() {
 }
 
 const ACTION_LABEL: Record<MaintenanceStatus, string> = {
-  reported: 'Reopen',
-  acknowledged: 'Acknowledge',
-  approved: 'Approve the repair',
-  in_progress: 'Mark work started',
-  resolved: 'Mark resolved',
-  declined: 'Decline',
+  reported: "Reopen",
+  acknowledged: "Acknowledge",
+  approved: "Approve the repair",
+  in_progress: "Mark work started",
+  resolved: "Mark resolved",
+  declined: "Decline",
 };
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: color.bg },
   content: { padding: space.xl, paddingBottom: space.xxxl * 2 },
-  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: space.md },
+  pills: { flexDirection: "row", flexWrap: "wrap", gap: space.xs, marginTop: space.md },
   description: { ...type.body, fontSize: 14.5, lineHeight: 21, marginTop: space.lg },
   meta: { ...type.caption, fontSize: 12.5, marginTop: space.md },
   ai: { marginTop: space.lg },

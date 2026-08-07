@@ -8,14 +8,7 @@
  * changes, both sides change together.
  */
 
-import type {
-  Cents,
-  ISODate,
-  LedgerStatus,
-  RentPeriod,
-  RentPeriodSummary,
-  Tenancy,
-} from './types';
+import type { Cents, ISODate, LedgerStatus, RentPeriod, RentPeriodSummary, Tenancy } from "./types";
 
 // ---------------------------------------------------------------------------
 // Calendar dates
@@ -32,7 +25,7 @@ export function toISODate(year: number, month: number, day: number): ISODate {
 }
 
 export function parseISODate(date: ISODate): { year: number; month: number; day: number } {
-  const [year, month, day] = date.split('-').map(Number);
+  const [year, month, day] = date.split("-").map(Number);
   return { year, month, day };
 }
 
@@ -82,7 +75,7 @@ export function dueDateFor(monthStart: ISODate, dueDayOfMonth: number): ISODate 
 // Period generation — the twin of ensure_rent_periods() (SPEC.md §4.5)
 // ---------------------------------------------------------------------------
 
-export type GeneratedPeriod = Omit<RentPeriod, 'id' | 'created_at'>;
+export type GeneratedPeriod = Omit<RentPeriod, "id" | "created_at">;
 
 /**
  * Every month from the tenancy start through `monthsAhead` months from today,
@@ -128,19 +121,19 @@ export const DUE_SOON_DAYS = 7;
  * screens must call it rather than re-testing amounts themselves.
  */
 export function deriveLedgerStatus(
-  summary: Pick<RentPeriodSummary, 'amount_due_cents' | 'paid_cents' | 'due_date'>,
+  summary: Pick<RentPeriodSummary, "amount_due_cents" | "paid_cents" | "due_date">,
   today: ISODate = todayISO(),
 ): LedgerStatus {
   const { amount_due_cents: due, paid_cents: paid, due_date: dueDate } = summary;
 
-  if (paid > due) return 'overpaid';
-  if (paid > 0 && paid === due) return 'paid';
-  if (paid > 0) return 'partial';
+  if (paid > due) return "overpaid";
+  if (paid > 0 && paid === due) return "paid";
+  if (paid > 0) return "partial";
 
   // Nothing paid.
-  if (dueDate < today) return 'overdue';
-  if (daysBetween(today, dueDate) <= DUE_SOON_DAYS) return 'due';
-  return 'upcoming';
+  if (dueDate < today) return "overdue";
+  if (daysBetween(today, dueDate) <= DUE_SOON_DAYS) return "due";
+  return "upcoming";
 }
 
 // ---------------------------------------------------------------------------
@@ -148,18 +141,18 @@ export function deriveLedgerStatus(
 // ---------------------------------------------------------------------------
 
 const MONTH_NAMES = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 const MONTH_SHORT = MONTH_NAMES.map((m) => m.slice(0, 3));
@@ -175,15 +168,15 @@ export function formatLKR(cents: Cents, options: { showDecimals?: boolean } = {}
   const fraction = abs % 100;
   const showDecimals = options.showDecimals ?? fraction !== 0;
 
-  const grouped = String(whole).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const grouped = String(whole).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   const body = showDecimals ? `${grouped}.${pad(fraction)}` : grouped;
-  return `${negative ? '-' : ''}Rs. ${body}`;
+  return `${negative ? "-" : ""}Rs. ${body}`;
 }
 
 /** Parse what a user typed into a rent field. Returns null if unusable. */
 export function parseLKRInput(input: string): Cents | null {
-  const cleaned = input.replace(/[,\s]/g, '');
-  if (!/^\d*\.?\d{0,2}$/.test(cleaned) || cleaned === '' || cleaned === '.') return null;
+  const cleaned = input.replace(/[,\s]/g, "");
+  if (!/^\d*\.?\d{0,2}$/.test(cleaned) || cleaned === "" || cleaned === ".") return null;
   return Math.round(Number(cleaned) * 100);
 }
 
@@ -224,9 +217,9 @@ export function ordinal(n: number): string {
 /** Human relative phrasing for a due date, e.g. `Due in 3 days`, `12 days late`. */
 export function describeDueDate(dueDate: ISODate, today: ISODate = todayISO()): string {
   const days = daysBetween(today, dueDate);
-  if (days === 0) return 'Due today';
-  if (days === 1) return 'Due tomorrow';
+  if (days === 0) return "Due today";
+  if (days === 1) return "Due tomorrow";
   if (days > 1) return `Due in ${days} days`;
-  if (days === -1) return '1 day late';
+  if (days === -1) return "1 day late";
   return `${Math.abs(days)} days late`;
 }

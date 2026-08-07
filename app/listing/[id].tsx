@@ -1,20 +1,13 @@
-import React, { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import React, { useState } from "react";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, useLocalSearchParams } from "expo-router";
 
-import { Pill, Stars } from '@/components/lifecycle';
-import { Button, Card, ErrorState, Field, LoadingState, SectionLabel } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatLKR } from '@/data/ledger';
-import type { Listing } from '@/data/lifecycleTypes';
-import { color, radius, space, type } from '@/theme';
+import { Pill, Stars } from "@/components/lifecycle";
+import { Button, Card, ErrorState, Field, LoadingState, SectionLabel } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatLKR } from "@/data/ledger";
+import type { Listing } from "@/data/lifecycleTypes";
+import { color, radius, space, type } from "@/theme";
 
 /**
  * A listing, led by the landlord rather than the property.
@@ -30,7 +23,7 @@ export default function ListingScreen() {
 
   const { data: listing, loading, error } = useAsync<Listing>(() => repo.getListing(id), [id]);
 
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -51,17 +44,17 @@ export default function ListingScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Listing' }} />
+      <Stack.Screen options={{ title: "Listing" }} />
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={90}
       >
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Card>
             <Text style={type.title}>{listing.title}</Text>
             <Text style={[type.caption, styles.location]}>
-              {listing.city} · {listing.bedrooms} bedroom{listing.bedrooms === 1 ? '' : 's'}
+              {listing.city} · {listing.bedrooms} bedroom{listing.bedrooms === 1 ? "" : "s"}
             </Text>
             <Text style={styles.rent}>{formatLKR(listing.rentCents)}</Text>
             <Text style={type.caption}>per month</Text>
@@ -115,7 +108,12 @@ export default function ListingScreen() {
                 multiline
                 placeholder="When is it available? Is the rent negotiable for a longer lease?"
               />
-              <Button label="Send enquiry" onPress={send} loading={busy} disabled={!message.trim()} />
+              <Button
+                label="Send enquiry"
+                onPress={send}
+                loading={busy}
+                disabled={!message.trim()}
+              />
             </>
           )}
 
@@ -134,9 +132,9 @@ const styles = StyleSheet.create({
   content: { padding: space.xl, paddingBottom: space.xxxl * 2 },
   location: { marginTop: 2 },
   rent: { ...type.moneyLarge, fontSize: 28, marginTop: space.lg },
-  landlordTop: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.xs },
-  ratingText: { fontSize: 13, color: color.textMuted, fontVariant: ['tabular-nums'] },
+  landlordTop: { flexDirection: "row", alignItems: "flex-start", gap: space.md },
+  ratingRow: { flexDirection: "row", alignItems: "center", gap: space.sm, marginTop: space.xs },
+  ratingText: { fontSize: 13, color: color.textMuted, fontVariant: ["tabular-nums"] },
   record: { ...type.caption, fontSize: 13.5, lineHeight: 20, marginTop: space.md },
   noRecord: {
     marginTop: space.md,
@@ -146,5 +144,11 @@ const styles = StyleSheet.create({
   },
   noRecordText: { fontSize: 13, color: color.textMuted, lineHeight: 19 },
   sentText: { ...type.body, fontSize: 14, lineHeight: 21, marginTop: space.md },
-  footnote: { ...type.caption, fontSize: 12, marginTop: space.xl, lineHeight: 18, fontStyle: 'italic' },
+  footnote: {
+    ...type.caption,
+    fontSize: 12,
+    marginTop: space.xl,
+    lineHeight: 18,
+    fontStyle: "italic",
+  },
 });

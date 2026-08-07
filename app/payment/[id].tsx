@@ -1,14 +1,22 @@
-import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
+import React, { useState } from "react";
+import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 
-import { SlipImage } from '@/components/SlipImage';
-import { Button, Card, Divider, ErrorState, KeyValue, LoadingState, SectionLabel } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatDate, formatLKR } from '@/data/ledger';
-import { PAYMENT_METHOD_LABELS, type Payment } from '@/data/types';
-import { color, radius, space, type } from '@/theme';
+import { SlipImage } from "@/components/SlipImage";
+import {
+  Button,
+  Card,
+  Divider,
+  ErrorState,
+  KeyValue,
+  LoadingState,
+  SectionLabel,
+} from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatDate, formatLKR } from "@/data/ledger";
+import { PAYMENT_METHOD_LABELS, type Payment } from "@/data/types";
+import { color, radius, space, type } from "@/theme";
 
 export default function PaymentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -20,11 +28,11 @@ export default function PaymentDetailScreen() {
   const addSlip = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Permission needed', 'RentLoop needs access to your photos to attach a slip.');
+      Alert.alert("Permission needed", "RentLoop needs access to your photos to attach a slip.");
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ["images"],
       quality: 0.7,
     });
     if (result.canceled || !result.assets[0]) return;
@@ -59,7 +67,7 @@ export default function PaymentDetailScreen() {
             <KeyValue
               label="Reference"
               value={data.reference}
-              valueStyle={{ fontVariant: ['tabular-nums'] }}
+              valueStyle={{ fontVariant: ["tabular-nums"] }}
             />
           </>
         ) : null}
@@ -106,9 +114,7 @@ export default function PaymentDetailScreen() {
 
       {data.receipt_path ? (
         <View style={styles.privacy}>
-          <Text style={styles.privacyText}>
-            Stored privately. Only you can open this image.
-          </Text>
+          <Text style={styles.privacyText}>Stored privately. Only you can open this image.</Text>
         </View>
       ) : null}
     </ScrollView>
@@ -128,5 +134,5 @@ const styles = StyleSheet.create({
     backgroundColor: color.surfaceSunken,
     borderRadius: radius.sm,
   },
-  privacyText: { ...type.caption, fontSize: 12, textAlign: 'center' },
+  privacyText: { ...type.caption, fontSize: 12, textAlign: "center" },
 });

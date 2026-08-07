@@ -1,32 +1,32 @@
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 'react-native';
-import { router } from 'expo-router';
+import React, { useState } from "react";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from "react-native";
+import { router } from "expo-router";
 
-import { Button, Field } from '@/components/ui';
-import { useApp } from '@/data/store';
-import { color, space, type } from '@/theme';
+import { Button, Field } from "@/components/ui";
+import { useApp } from "@/data/store";
+import { color, space, type } from "@/theme";
 
 export default function SignUpScreen() {
   const { signUp } = useApp();
 
-  const [displayName, setDisplayName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
-    if (!displayName.trim()) return setError('Enter your name');
-    if (!email.trim()) return setError('Enter your email');
-    if (password.length < 8) return setError('Use at least 8 characters');
+    if (!displayName.trim()) return setError("Enter your name");
+    if (!email.trim()) return setError("Enter your email");
+    if (password.length < 8) return setError("Use at least 8 characters");
 
     setBusy(true);
     setError(null);
     try {
       await signUp({ email, password, displayName });
-      router.replace('/');
+      router.replace("/");
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not create your account');
+      setError(e instanceof Error ? e.message : "Could not create your account");
     } finally {
       setBusy(false);
     }
@@ -35,7 +35,7 @@ export default function SignUpScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={[type.title, styles.heading]}>Set up your account</Text>

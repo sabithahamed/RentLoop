@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import React, { useState } from "react";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
 
-import { Button, Field, SectionLabel } from '@/components/ui';
-import { useApp } from '@/data/store';
+import { Button, Field, SectionLabel } from "@/components/ui";
+import { useApp } from "@/data/store";
 import {
   addMonths,
   daysInMonth,
@@ -14,8 +14,8 @@ import {
   parseISODate,
   parseLKRInput,
   todayISO,
-} from '@/data/ledger';
-import { color, space, type } from '@/theme';
+} from "@/data/ledger";
+import { color, space, type } from "@/theme";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -34,13 +34,13 @@ function isRealDate(value: string): boolean {
 export default function CreateTenancyScreen() {
   const { repo, refreshTenancy, invalidate } = useApp();
 
-  const [propertyLabel, setPropertyLabel] = useState('');
-  const [addressLine, setAddressLine] = useState('');
-  const [city, setCity] = useState('');
-  const [landlordName, setLandlordName] = useState('');
-  const [landlordPhone, setLandlordPhone] = useState('');
-  const [rent, setRent] = useState('');
-  const [dueDay, setDueDay] = useState('1');
+  const [propertyLabel, setPropertyLabel] = useState("");
+  const [addressLine, setAddressLine] = useState("");
+  const [city, setCity] = useState("");
+  const [landlordName, setLandlordName] = useState("");
+  const [landlordPhone, setLandlordPhone] = useState("");
+  const [rent, setRent] = useState("");
+  const [dueDay, setDueDay] = useState("1");
   const [startedOn, setStartedOn] = useState(firstOfMonth(todayISO()));
 
   const [busy, setBusy] = useState(false);
@@ -51,13 +51,13 @@ export default function CreateTenancyScreen() {
 
   const validate = (): boolean => {
     const next: Record<string, string> = {};
-    if (!propertyLabel.trim()) next.propertyLabel = 'Give the place a name you will recognise';
+    if (!propertyLabel.trim()) next.propertyLabel = "Give the place a name you will recognise";
     if (!landlordName.trim()) next.landlordName = "Enter your landlord's name";
-    if (rentCents === null || rentCents <= 0) next.rent = 'Enter the monthly rent';
+    if (rentCents === null || rentCents <= 0) next.rent = "Enter the monthly rent";
     if (!Number.isInteger(dueDayNumber) || dueDayNumber < 1 || dueDayNumber > 31) {
-      next.dueDay = 'A day between 1 and 31';
+      next.dueDay = "A day between 1 and 31";
     }
-    if (!isRealDate(startedOn)) next.startedOn = 'Use YYYY-MM-DD';
+    if (!isRealDate(startedOn)) next.startedOn = "Use YYYY-MM-DD";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -78,26 +78,27 @@ export default function CreateTenancyScreen() {
       });
       await refreshTenancy();
       invalidate();
-      router.replace('/tenant/home');
+      router.replace("/tenant/home");
     } catch (e) {
-      setErrors({ form: e instanceof Error ? e.message : 'Could not save your tenancy' });
+      setErrors({ form: e instanceof Error ? e.message : "Could not save your tenancy" });
     } finally {
       setBusy(false);
     }
   };
 
-  const previewValid = rentCents !== null && rentCents > 0 && dueDayNumber >= 1 && dueDayNumber <= 31;
+  const previewValid =
+    rentCents !== null && rentCents > 0 && dueDayNumber >= 1 && dueDayNumber <= 31;
 
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={90}
     >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={[type.bodyMuted, styles.intro]}>
-          This becomes your rent ledger. You can record payments against every month from your
-          start date onward.
+          This becomes your rent ledger. You can record payments against every month from your start
+          date onward.
         </Text>
 
         <SectionLabel style={styles.firstLabel}>The property</SectionLabel>
@@ -170,8 +171,8 @@ export default function CreateTenancyScreen() {
         {previewValid && isRealDate(startedOn) ? (
           <View style={styles.preview}>
             <Text style={styles.previewText}>
-              {formatLKR(rentCents!)} due on the {ordinal(dueDayNumber)}, from{' '}
-              {formatDate(firstOfMonth(startedOn))} through{' '}
+              {formatLKR(rentCents!)} due on the {ordinal(dueDayNumber)}, from{" "}
+              {formatDate(firstOfMonth(startedOn))} through{" "}
               {formatDate(addMonths(firstOfMonth(todayISO()), 3))}.
             </Text>
           </View>

@@ -1,14 +1,14 @@
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Pill, Stat } from '@/components/lifecycle';
-import { Card, LoadingState, SectionLabel } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatLKR } from '@/data/ledger';
-import type { PortfolioEntry } from '@/data/lifecycleTypes';
-import { color, radius, space, type } from '@/theme';
+import { Pill, Stat } from "@/components/lifecycle";
+import { Card, LoadingState, SectionLabel } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatLKR } from "@/data/ledger";
+import type { PortfolioEntry } from "@/data/lifecycleTypes";
+import { color, radius, space, type } from "@/theme";
 
 /**
  * The landlord's opening screen: how much rent is late, and where.
@@ -44,13 +44,13 @@ export default function LandlordPortfolio() {
           <Stat value={formatLKR(expected)} label="Expected monthly" />
           <Stat
             value={formatLKR(totalArrears)}
-            label={behindCount === 0 ? 'All collected' : `Late across ${behindCount}`}
-            tone={totalArrears > 0 ? 'bad' : undefined}
+            label={behindCount === 0 ? "All collected" : `Late across ${behindCount}`}
+            tone={totalArrears > 0 ? "bad" : undefined}
           />
         </View>
         {openTickets > 0 ? (
           <Text style={styles.ticketNote}>
-            {openTickets} open repair {openTickets === 1 ? 'request' : 'requests'} waiting on you.
+            {openTickets} open repair {openTickets === 1 ? "request" : "requests"} waiting on you.
           </Text>
         ) : null}
       </Card>
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: color.bg },
   content: { paddingHorizontal: space.xl },
   heading: { marginTop: 2, marginBottom: space.lg },
-  stats: { flexDirection: 'row', gap: space.lg },
+  stats: { flexDirection: "row", gap: space.lg },
   ticketNote: {
     ...type.caption,
     marginTop: space.lg,
@@ -136,10 +136,16 @@ const styles = StyleSheet.create({
     padding: space.lg,
   },
   cardPressed: { backgroundColor: color.surfaceSunken },
-  cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
-  cardTitle: { fontSize: 15.5, fontWeight: '600', color: color.text },
+  cardTop: { flexDirection: "row", alignItems: "flex-start", gap: space.md },
+  cardTitle: { fontSize: 15.5, fontWeight: "600", color: color.text },
   cardTenant: { fontSize: 13, color: color.textMuted, marginTop: 2 },
-  cardPills: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: space.md },
+  cardPills: { flexDirection: "row", flexWrap: "wrap", gap: space.xs, marginTop: space.md },
   manual: { ...type.caption, fontSize: 12.5, marginTop: space.md, lineHeight: 18 },
-  footnote: { ...type.caption, fontSize: 12, marginTop: space.lg, lineHeight: 17, fontStyle: 'italic' },
+  footnote: {
+    ...type.caption,
+    fontSize: 12,
+    marginTop: space.lg,
+    lineHeight: 17,
+    fontStyle: "italic",
+  },
 });

@@ -32,22 +32,22 @@ export type Cents = number;
 // Domain unions
 // ---------------------------------------------------------------------------
 
-export type TenancyStatus = 'active' | 'ended';
+export type TenancyStatus = "active" | "ended";
 
-export type PaymentMethod = 'bank_transfer' | 'cash' | 'online' | 'other';
+export type PaymentMethod = "bank_transfer" | "cash" | "online" | "other";
 
 export const PAYMENT_METHODS: readonly PaymentMethod[] = [
-  'bank_transfer',
-  'cash',
-  'online',
-  'other',
+  "bank_transfer",
+  "cash",
+  "online",
+  "other",
 ] as const;
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  bank_transfer: 'Bank transfer',
-  cash: 'Cash',
-  online: 'Online',
-  other: 'Other',
+  bank_transfer: "Bank transfer",
+  cash: "Cash",
+  online: "Online",
+  other: "Other",
 };
 
 /**
@@ -67,7 +67,7 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
  * Note that a part-paid month past its due date reads `partial`, not
  * `overdue`. The tenant did pay something; saying otherwise is false.
  */
-export type LedgerStatus = 'paid' | 'overpaid' | 'partial' | 'overdue' | 'due' | 'upcoming';
+export type LedgerStatus = "paid" | "overpaid" | "partial" | "overdue" | "due" | "upcoming";
 
 // ---------------------------------------------------------------------------
 // Table rows
@@ -169,17 +169,17 @@ export interface Payment {
 // Inserts
 // ---------------------------------------------------------------------------
 
-export type NewProperty = Omit<Property, 'id' | 'created_at'>;
+export type NewProperty = Omit<Property, "id" | "created_at">;
 
-export type NewLandlordContact = Omit<LandlordContact, 'id' | 'created_at' | 'linked_user_id'>;
+export type NewLandlordContact = Omit<LandlordContact, "id" | "created_at" | "linked_user_id">;
 
-export type NewTenancy = Omit<Tenancy, 'id' | 'created_at' | 'currency' | 'status' | 'ended_on'> & {
+export type NewTenancy = Omit<Tenancy, "id" | "created_at" | "currency" | "status" | "ended_on"> & {
   currency?: string;
   status?: TenancyStatus;
   ended_on?: ISODate | null;
 };
 
-export type NewPayment = Omit<Payment, 'id' | 'created_at' | 'method' | 'receipt_path'> & {
+export type NewPayment = Omit<Payment, "id" | "created_at" | "method" | "receipt_path"> & {
   method?: PaymentMethod;
   receipt_path?: string | null;
 };
@@ -240,7 +240,7 @@ export interface PeriodDetail {
 // ---------------------------------------------------------------------------
 
 /** Private bucket. Slips are served through short-lived signed URLs only. */
-export const RECEIPTS_BUCKET = 'receipts';
+export const RECEIPTS_BUCKET = "receipts";
 
 /**
  * `{owner_id}/{payment_id}.jpg` — the owner is the first path segment so the

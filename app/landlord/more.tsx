@@ -1,12 +1,12 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { NavRow, Pill } from '@/components/lifecycle';
-import { Button, Card, SectionLabel } from '@/components/ui';
-import { useApp } from '@/data/store';
-import { color, space, type } from '@/theme';
+import { NavRow, Pill } from "@/components/lifecycle";
+import { Button, Card, SectionLabel } from "@/components/ui";
+import { useApp } from "@/data/store";
+import { color, space, type } from "@/theme";
 
 export default function LandlordMore() {
   const { role, setRole, signOut } = useApp();
@@ -27,12 +27,12 @@ export default function LandlordMore() {
         <NavRow
           title="Deposit settlements"
           subtitle="Move-out comparisons and deductions"
-          onPress={() => router.push('/deposit')}
+          onPress={() => router.push("/deposit")}
         />
         <NavRow
           title="Reviews"
           subtitle="What tenants said, and what you said about them"
-          onPress={() => router.push('/reviews')}
+          onPress={() => router.push("/reviews")}
         />
       </View>
 
@@ -50,8 +50,8 @@ export default function LandlordMore() {
           label="Switch to the tenant view"
           variant="secondary"
           onPress={() => {
-            setRole('tenant');
-            router.replace('/tenant/home');
+            setRole("tenant");
+            router.replace("/tenant/home");
           }}
           style={styles.roleButton}
         />
@@ -60,7 +60,7 @@ export default function LandlordMore() {
       <Button
         label="Sign out"
         variant="danger"
-        onPress={() => signOut().then(() => router.replace('/sign-in'))}
+        onPress={() => signOut().then(() => router.replace("/sign-in"))}
         style={styles.signOut}
       />
     </ScrollView>

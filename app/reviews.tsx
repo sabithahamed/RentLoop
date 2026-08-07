@@ -1,14 +1,14 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, router } from 'expo-router';
+import React from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, router } from "expo-router";
 
-import { EmptyNote, Pill, Stars } from '@/components/lifecycle';
-import { Button, Card, LoadingState, SectionLabel } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatDate } from '@/data/ledger';
-import type { Review } from '@/data/lifecycleTypes';
-import type { TenancySummary } from '@/data/types';
-import { color, radius, space, type } from '@/theme';
+import { EmptyNote, Pill, Stars } from "@/components/lifecycle";
+import { Button, Card, LoadingState, SectionLabel } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatDate } from "@/data/ledger";
+import type { Review } from "@/data/lifecycleTypes";
+import type { TenancySummary } from "@/data/types";
+import { color, radius, space, type } from "@/theme";
 
 /**
  * Reviews, which only exist off a tenancy RentLoop actually recorded.
@@ -25,7 +25,7 @@ export default function ReviewsScreen() {
     () => repo.listTenancies(),
     [],
   );
-  const ended = tenancies?.filter((t) => t.tenancy.status === 'ended') ?? [];
+  const ended = tenancies?.filter((t) => t.tenancy.status === "ended") ?? [];
   const endedId = ended[0]?.tenancy.id ?? null;
 
   const { data: reviews, loading: loadingReviews } = useAsync<Review[]>(
@@ -41,7 +41,7 @@ export default function ReviewsScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Reviews' }} />
+      <Stack.Screen options={{ title: "Reviews" }} />
       <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
         <Card>
           <Pill label="VERIFIED TENANCIES ONLY" tone="good" />
@@ -57,17 +57,15 @@ export default function ReviewsScreen() {
           </View>
         ) : reviews && reviews.length > 0 ? (
           <>
-            <SectionLabel>
-              {ended[0]?.property.label ?? 'Previous tenancy'}
-            </SectionLabel>
+            <SectionLabel>{ended[0]?.property.label ?? "Previous tenancy"}</SectionLabel>
             <View style={styles.list}>
               {reviews.map((review) => (
                 <View key={review.id} style={styles.review}>
                   <View style={styles.reviewTop}>
                     <Text style={styles.direction}>
-                      {review.direction === 'tenant_to_landlord'
-                        ? 'You reviewed your landlord'
-                        : 'Your landlord reviewed you'}
+                      {review.direction === "tenant_to_landlord"
+                        ? "You reviewed your landlord"
+                        : "Your landlord reviewed you"}
                     </Text>
                     <Stars rating={review.rating} />
                   </View>
@@ -121,20 +119,26 @@ const styles = StyleSheet.create({
     padding: space.lg,
   },
   reviewTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: space.md,
   },
-  direction: { flex: 1, fontSize: 13, fontWeight: '600', color: color.textMuted },
+  direction: { flex: 1, fontSize: 13, fontWeight: "600", color: color.textMuted },
   body: { ...type.body, fontSize: 14.5, lineHeight: 21, marginTop: space.md },
   reviewBottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginTop: space.md,
   },
   date: { fontSize: 12, color: color.textFaint },
   write: { marginTop: space.xl },
-  footnote: { ...type.caption, fontSize: 12, marginTop: space.xl, lineHeight: 18, fontStyle: 'italic' },
+  footnote: {
+    ...type.caption,
+    fontSize: 12,
+    marginTop: space.xl,
+    lineHeight: 18,
+    fontStyle: "italic",
+  },
 });

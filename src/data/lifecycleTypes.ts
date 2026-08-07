@@ -11,7 +11,7 @@
  * dates, `| null` rather than optional for absent values.
  */
 
-import type { Cents, ISODate, ISODateTime, UUID } from './types';
+import type { Cents, ISODate, ISODateTime, UUID } from "./types";
 
 // ---------------------------------------------------------------------------
 // Roles
@@ -24,7 +24,7 @@ import type { Cents, ISODate, ISODateTime, UUID } from './types';
  * the prototype it is a lens the user flips, so connected mode can be
  * demonstrated without two devices and two accounts.
  */
-export type Role = 'tenant' | 'landlord';
+export type Role = "tenant" | "landlord";
 
 // ---------------------------------------------------------------------------
 // Mocked AI
@@ -40,7 +40,7 @@ export type Role = 'tenant' | 'landlord';
  */
 export interface AiSuggestion {
   id: UUID;
-  kind: 'extraction' | 'missing_area' | 'defect' | 'classification' | 'payment_match';
+  kind: "extraction" | "missing_area" | "defect" | "classification" | "payment_match";
   headline: string;
   detail: string;
   /** 0–1. Below ~0.7 the UI should visibly hedge. */
@@ -54,7 +54,7 @@ export interface AiSuggestion {
 // Agreement
 // ---------------------------------------------------------------------------
 
-export type AgreementStatus = 'none' | 'processing' | 'needs_review' | 'confirmed';
+export type AgreementStatus = "none" | "processing" | "needs_review" | "confirmed";
 
 /** Terms the assistant read out of the document, each awaiting human confirmation. */
 export interface ExtractedTerm {
@@ -87,10 +87,10 @@ export interface Agreement {
 // Inspections
 // ---------------------------------------------------------------------------
 
-export type InspectionKind = 'move_in' | 'move_out';
-export type InspectionStatus = 'not_started' | 'in_progress' | 'complete';
+export type InspectionKind = "move_in" | "move_out";
+export type InspectionStatus = "not_started" | "in_progress" | "complete";
 
-export type DefectSeverity = 'minor' | 'moderate' | 'severe';
+export type DefectSeverity = "minor" | "moderate" | "severe";
 
 export interface InspectionPhoto {
   id: UUID;
@@ -140,22 +140,12 @@ export interface AreaComparison {
 // ---------------------------------------------------------------------------
 
 export type MaintenanceStatus =
-  | 'reported'
-  | 'acknowledged'
-  | 'approved'
-  | 'in_progress'
-  | 'resolved'
-  | 'declined';
+  "reported" | "acknowledged" | "approved" | "in_progress" | "resolved" | "declined";
 
-export type MaintenanceUrgency = 'low' | 'normal' | 'high' | 'emergency';
+export type MaintenanceUrgency = "low" | "normal" | "high" | "emergency";
 
 export type MaintenanceCategory =
-  | 'plumbing'
-  | 'electrical'
-  | 'structural'
-  | 'appliance'
-  | 'pest'
-  | 'other';
+  "plumbing" | "electrical" | "structural" | "appliance" | "pest" | "other";
 
 export interface MaintenanceEvent {
   id: UUID;
@@ -190,7 +180,7 @@ export interface MaintenanceTicket {
 // Communication
 // ---------------------------------------------------------------------------
 
-export type ThreadSubjectType = 'general' | 'payment' | 'maintenance' | 'inspection';
+export type ThreadSubjectType = "general" | "payment" | "maintenance" | "inspection";
 
 export interface Message {
   id: UUID;
@@ -219,7 +209,7 @@ export interface Thread {
 // Deposit settlement
 // ---------------------------------------------------------------------------
 
-export type SettlementStatus = 'not_started' | 'proposed' | 'disputed' | 'agreed' | 'settled';
+export type SettlementStatus = "not_started" | "proposed" | "disputed" | "agreed" | "settled";
 
 export interface Deduction {
   id: UUID;
@@ -248,7 +238,7 @@ export interface DepositSettlement {
 // Reviews
 // ---------------------------------------------------------------------------
 
-export type ReviewDirection = 'tenant_to_landlord' | 'landlord_to_tenant';
+export type ReviewDirection = "tenant_to_landlord" | "landlord_to_tenant";
 
 /** Only writable after a verified, ended tenancy — reputation has to mean something. */
 export interface Review {
@@ -288,16 +278,16 @@ export interface Listing {
 // ---------------------------------------------------------------------------
 
 export type ReminderKind =
-  | 'rent_due'
-  | 'rent_overdue'
-  | 'notice_deadline'
-  | 'agreement_ending'
-  | 'repair_waiting'
-  | 'agreement_unconfirmed'
-  | 'inspection_incomplete'
-  | 'deposit_unanswered';
+  | "rent_due"
+  | "rent_overdue"
+  | "notice_deadline"
+  | "agreement_ending"
+  | "repair_waiting"
+  | "agreement_unconfirmed"
+  | "inspection_incomplete"
+  | "deposit_unanswered";
 
-export type ReminderSeverity = 'info' | 'soon' | 'urgent';
+export type ReminderSeverity = "info" | "soon" | "urgent";
 
 /**
  * Derived, never stored.
@@ -326,7 +316,7 @@ export interface Reminder {
 // Renewal
 // ---------------------------------------------------------------------------
 
-export type RenewalIntent = 'undecided' | 'renewing' | 'leaving';
+export type RenewalIntent = "undecided" | "renewing" | "leaving";
 
 export interface Renewal {
   tenancy_id: UUID;
@@ -342,7 +332,7 @@ export interface Renewal {
 // Connected mode
 // ---------------------------------------------------------------------------
 
-export type InvitationStatus = 'none' | 'sent' | 'accepted';
+export type InvitationStatus = "none" | "sent" | "accepted";
 
 /**
  * The bridge from tenant-only to connected mode.

@@ -4,7 +4,7 @@
 
 **Stack:** React Native (Expo) + TypeScript. Supabase for auth, Postgres, and storage. The app talks to Supabase directly — no custom backend in this slice.
 
-Background: [docs/VISION.md](docs/VISION.md). This document supersedes the vision doc wherever they disagree about *this* slice.
+Background: [docs/VISION.md](docs/VISION.md). This document supersedes the vision doc wherever they disagree about _this_ slice.
 
 ---
 
@@ -36,7 +36,7 @@ Each of these was a real fork. Recording the reasoning so a later change is a de
 
 A `properties` row (label, address) is separate from the `tenancies` row that references it.
 
-A lease renewal is a *new tenancy at the same property*. Move-in and move-out inspections compare two moments at the same property. The landlord dashboard in Phase 2 is a list of properties. All three break if the address is a column on the tenancy.
+A lease renewal is a _new tenancy at the same property_. Move-in and move-out inspections compare two moments at the same property. The landlord dashboard in Phase 2 is a list of properties. All three break if the address is a column on the tenancy.
 
 Cost paid now: one extra table, and a join to render a ledger header.
 
@@ -61,7 +61,7 @@ The contact stays tenant-owned even after linking. The tenant's private note tha
 
 `rent_periods` are generated from the tenancy's start date and due day. A `payment` references a `rent_period_id`.
 
-The alternative — a payment carrying a `period_label` string — is less code and gives a ledger that is just a list of what was paid. It can never say *"you have not paid July."* Absence of a row is not a fact you can query, sort, badge, or send a reminder about. Every retention mechanism in the vision doc (rent reminders, late-payment flags, AI payment matching) needs an addressable row for a month nobody has paid yet.
+The alternative — a payment carrying a `period_label` string — is less code and gives a ledger that is just a list of what was paid. It can never say _"you have not paid July."_ Absence of a row is not a fact you can query, sort, badge, or send a reminder about. Every retention mechanism in the vision doc (rent reminders, late-payment flags, AI payment matching) needs an addressable row for a month nobody has paid yet.
 
 So the ledger is a list of **periods**, not a list of payments. Payments hang off periods.
 
@@ -245,14 +245,14 @@ The view inherits RLS from `rent_periods` and `payments` when created with `secu
 
 `LedgerStatus` is computed from the summary row plus today's date, in this order — first match wins:
 
-| Status     | Condition                                                    |
-| ---------- | ------------------------------------------------------------ |
-| `overpaid` | `paid_cents > amount_due_cents`                               |
-| `paid`     | `paid_cents === amount_due_cents` (and `> 0`)                 |
-| `partial`  | `0 < paid_cents < amount_due_cents`                           |
-| `overdue`  | `paid_cents === 0` and `due_date < today`                     |
-| `due`      | `paid_cents === 0` and `due_date` is today or within 7 days   |
-| `upcoming` | otherwise                                                     |
+| Status     | Condition                                                   |
+| ---------- | ----------------------------------------------------------- |
+| `overpaid` | `paid_cents > amount_due_cents`                             |
+| `paid`     | `paid_cents === amount_due_cents` (and `> 0`)               |
+| `partial`  | `0 < paid_cents < amount_due_cents`                         |
+| `overdue`  | `paid_cents === 0` and `due_date < today`                   |
+| `due`      | `paid_cents === 0` and `due_date` is today or within 7 days |
+| `upcoming` | otherwise                                                   |
 
 A partially paid month that is past its due date shows as `partial`, not `overdue` — the tenant did pay something, and telling them otherwise is wrong. The remaining balance is shown alongside.
 
@@ -394,11 +394,11 @@ Header: property label, landlord name, rent amount, "due on the Nth".
 Body: `rent_period_summary` for the tenancy, newest month first, each row showing month, amount due, amount paid, balance if nonzero, and a status chip (§4.4). Current month is visually anchored.
 Empty state cannot occur — a tenancy always has at least one period.
 
-**4. Period detail** — one month. Amount due, total paid, balance, status, and the list of payments against it. Primary action: *Record payment*, prefilled with the outstanding balance.
+**4. Period detail** — one month. Amount due, total paid, balance, status, and the list of payments against it. Primary action: _Record payment_, prefilled with the outstanding balance.
 
-**5. Record payment** — amount (prefilled, editable — this is what makes partial payments real), date paid (default today), method, reference, note, and *Attach bank slip* (camera or library, optional). Save → insert → upload → patch → back to Period detail.
+**5. Record payment** — amount (prefilled, editable — this is what makes partial payments real), date paid (default today), method, reference, note, and _Attach bank slip_ (camera or library, optional). Save → insert → upload → patch → back to Period detail.
 
-**6. Payment detail** — the recorded values and the slip, full-screen and zoomable, via a signed URL. If `receipt_path` is null, an *Add slip* action.
+**6. Payment detail** — the recorded values and the slip, full-screen and zoomable, via a signed URL. If `receipt_path` is null, an _Add slip_ action.
 
 ---
 
@@ -460,5 +460,5 @@ Checked against the prototype (mock data). Re-checked against Supabase when the 
 - [x] A part-paid month past its due date reads `partial`, not `overdue`.
 - [x] A tenancy starting on the 31st produces a February period due on the 28th (29th in a leap year).
 - [x] A payment saved without a slip shows an "add proof" affordance; the ledger row badges it.
-- [ ] A payment saved with a slip renders it from a **signed** URL. *(Prototype renders a local URI — signed URLs need Supabase.)*
-- [ ] Signed in as user B, no row belonging to user A is readable — verified by query, not by the absence of a UI path to it. *(Needs RLS; the mock has no security boundary at all.)*
+- [ ] A payment saved with a slip renders it from a **signed** URL. _(Prototype renders a local URI — signed URLs need Supabase.)_
+- [ ] Signed in as user B, no row belonging to user A is readable — verified by query, not by the absence of a UI path to it. _(Needs RLS; the mock has no security boundary at all.)_

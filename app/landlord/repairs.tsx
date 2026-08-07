@@ -1,13 +1,13 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { EmptyNote } from '@/components/lifecycle';
-import { Card, LoadingState, SectionLabel } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import type { MaintenanceTicket } from '@/data/lifecycleTypes';
-import { color, space, type } from '@/theme';
-import { TicketRow } from '../tenant/repairs';
+import { EmptyNote } from "@/components/lifecycle";
+import { Card, LoadingState, SectionLabel } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import type { MaintenanceTicket } from "@/data/lifecycleTypes";
+import { color, space, type } from "@/theme";
+import { TicketRow } from "../tenant/repairs";
 
 /**
  * Repairs across every property, with the ones waiting on the landlord first.
@@ -25,9 +25,10 @@ export default function LandlordRepairs() {
     [],
   );
 
-  const waiting = tickets?.filter((t) => t.status === 'reported') ?? [];
-  const active = tickets?.filter((t) => ['acknowledged', 'approved', 'in_progress'].includes(t.status)) ?? [];
-  const done = tickets?.filter((t) => t.status === 'resolved' || t.status === 'declined') ?? [];
+  const waiting = tickets?.filter((t) => t.status === "reported") ?? [];
+  const active =
+    tickets?.filter((t) => ["acknowledged", "approved", "in_progress"].includes(t.status)) ?? [];
+  const done = tickets?.filter((t) => t.status === "resolved" || t.status === "declined") ?? [];
 
   return (
     <ScrollView

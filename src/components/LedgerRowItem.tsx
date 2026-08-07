@@ -7,26 +7,26 @@
  * be tidier and less useful.
  */
 
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { color, radius, space, statusColor, type } from '../theme';
-import { describeDueDate, formatDate, formatLKR, formatPeriodMonth } from '../data/ledger';
-import type { LedgerRow } from '../data/types';
-import { StatusChip } from './StatusChip';
+import { color, radius, space, statusColor, type } from "../theme";
+import { describeDueDate, formatDate, formatLKR, formatPeriodMonth } from "../data/ledger";
+import type { LedgerRow } from "../data/types";
+import { StatusChip } from "./StatusChip";
 
 function subtitleFor(row: LedgerRow): string {
   switch (row.status) {
-    case 'paid':
-      return row.last_paid_on ? `Settled ${formatDate(row.last_paid_on)}` : 'Settled';
-    case 'overpaid':
+    case "paid":
+      return row.last_paid_on ? `Settled ${formatDate(row.last_paid_on)}` : "Settled";
+    case "overpaid":
       return `${formatLKR(Math.abs(row.balance_cents))} over`;
-    case 'partial':
+    case "partial":
       return `${formatLKR(row.balance_cents)} still owed`;
-    case 'overdue':
-    case 'due':
+    case "overdue":
+    case "due":
       return describeDueDate(row.due_date);
-    case 'upcoming':
+    case "upcoming":
       return `Due ${formatDate(row.due_date)}`;
   }
 }
@@ -88,12 +88,12 @@ export function LedgerRowItem({
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: color.surface,
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.border,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   rowPressed: { backgroundColor: color.surfaceSunken },
   rail: { width: 3 },
@@ -104,13 +104,13 @@ const styles = StyleSheet.create({
     gap: space.xs,
   },
   line: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: space.md,
   },
   lineBottom: { marginTop: 2 },
-  monthWrap: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexShrink: 1 },
+  monthWrap: { flexDirection: "row", alignItems: "center", gap: space.sm, flexShrink: 1 },
   month: { ...type.heading, flexShrink: 1 },
   nowTag: {
     backgroundColor: color.accent,
@@ -120,13 +120,13 @@ const styles = StyleSheet.create({
   },
   nowTagText: {
     fontSize: 9,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 0.8,
     color: color.textInverse,
   },
-  subtitleWrap: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexShrink: 1 },
+  subtitleWrap: { flexDirection: "row", alignItems: "center", gap: space.sm, flexShrink: 1 },
   subtitle: { ...type.caption, flexShrink: 1 },
-  noProof: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  noProof: { flexDirection: "row", alignItems: "center", gap: 4 },
   noProofDot: {
     width: 5,
     height: 5,

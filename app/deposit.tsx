@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import React, { useState } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 
-import { EmptyNote, Pill } from '@/components/lifecycle';
-import { Button, Card, ErrorState, Field, LoadingState, SectionLabel } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatDate, formatLKR, parseLKRInput } from '@/data/ledger';
-import { settlementTotals } from '@/data/mock/lifecycleSeed';
-import type { DepositSettlement } from '@/data/lifecycleTypes';
-import type { TenancySummary } from '@/data/types';
-import { color, radius, space, type } from '@/theme';
+import { EmptyNote, Pill } from "@/components/lifecycle";
+import { Button, Card, ErrorState, Field, LoadingState, SectionLabel } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatDate, formatLKR, parseLKRInput } from "@/data/ledger";
+import { settlementTotals } from "@/data/mock/lifecycleSeed";
+import type { DepositSettlement } from "@/data/lifecycleTypes";
+import type { TenancySummary } from "@/data/types";
+import { color, radius, space, type } from "@/theme";
 
 /**
  * Deposit settlement — the end of the loop, and the reason the move-in photos
@@ -28,10 +28,14 @@ export default function DepositScreen() {
     () => repo.listTenancies(),
     [],
   );
-  const ended = tenancies?.find((t) => t.tenancy.status === 'ended') ?? null;
+  const ended = tenancies?.find((t) => t.tenancy.status === "ended") ?? null;
   const targetId = tenancyId ?? ended?.tenancy.id ?? null;
 
-  const { data: settlement, loading: loadingSettlement, error } = useAsync<DepositSettlement | null>(
+  const {
+    data: settlement,
+    loading: loadingSettlement,
+    error,
+  } = useAsync<DepositSettlement | null>(
     async () => (targetId ? repo.getSettlement(targetId) : null),
     [targetId],
   );
@@ -43,9 +47,9 @@ export default function DepositScreen() {
 
   const [busy, setBusy] = useState(false);
   const [adding, setAdding] = useState(false);
-  const [label, setLabel] = useState('');
-  const [amount, setAmount] = useState('');
-  const [reason, setReason] = useState('');
+  const [label, setLabel] = useState("");
+  const [amount, setAmount] = useState("");
+  const [reason, setReason] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
   const respond = async (deductionId: string, agreed: boolean) => {
@@ -61,9 +65,9 @@ export default function DepositScreen() {
   const propose = async () => {
     if (!settlement) return;
     const cents = parseLKRInput(amount);
-    if (!label.trim()) return setFormError('What is the deduction for?');
-    if (cents === null || cents <= 0) return setFormError('Enter an amount');
-    if (!reason.trim()) return setFormError('Say why — an unexplained deduction gets disputed');
+    if (!label.trim()) return setFormError("What is the deduction for?");
+    if (cents === null || cents <= 0) return setFormError("Enter an amount");
+    if (!reason.trim()) return setFormError("Say why — an unexplained deduction gets disputed");
 
     setBusy(true);
     setFormError(null);
@@ -71,11 +75,11 @@ export default function DepositScreen() {
       await repo.proposeDeduction(
         settlement.id,
         { label: label.trim(), amountCents: cents, reason: reason.trim(), evidenceAreaNames: [] },
-        'landlord',
+        "landlord",
       );
-      setLabel('');
-      setAmount('');
-      setReason('');
+      setLabel("");
+      setAmount("");
+      setReason("");
       setAdding(false);
       invalidate();
     } finally {
@@ -100,7 +104,7 @@ export default function DepositScreen() {
   if (!settlement || settlement.depositCents === 0) {
     return (
       <>
-        <Stack.Screen options={{ title: 'Deposit' }} />
+        <Stack.Screen options={{ title: "Deposit" }} />
         <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
           <Card>
             <EmptyNote>
@@ -118,7 +122,7 @@ export default function DepositScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Deposit settlement' }} />
+      <Stack.Screen options={{ title: "Deposit settlement" }} />
       <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
         {ended ? <Text style={type.caption}>{ended.property.label}</Text> : null}
 
@@ -146,7 +150,13 @@ export default function DepositScreen() {
           <View style={styles.statusRow}>
             <Pill
               label={STATUS_LABEL[settlement.status]}
-              tone={settlement.status === 'settled' ? 'good' : settlement.status === 'disputed' ? 'bad' : 'warn'}
+              tone={
+                settlement.status === "settled"
+                  ? "good"
+                  : settlement.status === "disputed"
+                    ? "bad"
+                    : "warn"
+              }
             />
             {unanswered > 0 ? <Pill label={`${unanswered} to answer`} tone="warn" /> : null}
           </View>
@@ -174,7 +184,7 @@ export default function DepositScreen() {
                 <View style={styles.evidence}>
                   <Text style={styles.evidenceLabel}>Backed by</Text>
                   <Text style={styles.evidenceValue}>
-                    {deduction.evidenceAreaNames.join(', ')} — photographed at both ends
+                    {deduction.evidenceAreaNames.join(", ")} — photographed at both ends
                   </Text>
                 </View>
               ) : (
@@ -186,7 +196,7 @@ export default function DepositScreen() {
               )}
 
               {deduction.agreed === null ? (
-                role === 'tenant' ? (
+                role === "tenant" ? (
                   <View style={styles.respond}>
                     <Button
                       label="I agree"
@@ -209,8 +219,8 @@ export default function DepositScreen() {
               ) : (
                 <View style={styles.answered}>
                   <Pill
-                    label={deduction.agreed ? 'Agreed' : 'Disputed'}
-                    tone={deduction.agreed ? 'good' : 'bad'}
+                    label={deduction.agreed ? "Agreed" : "Disputed"}
+                    tone={deduction.agreed ? "good" : "bad"}
                   />
                 </View>
               )}
@@ -218,7 +228,7 @@ export default function DepositScreen() {
           ))}
         </View>
 
-        {role === 'landlord' ? (
+        {role === "landlord" ? (
           adding ? (
             <View style={styles.addForm}>
               <SectionLabel>New deduction</SectionLabel>
@@ -273,7 +283,7 @@ export default function DepositScreen() {
           )
         ) : null}
 
-        {role === 'landlord' && settlement.status === 'agreed' ? (
+        {role === "landlord" && settlement.status === "agreed" ? (
           <Button
             label={`Settle — return ${formatLKR(totals.returning)}`}
             onPress={settle}
@@ -282,16 +292,16 @@ export default function DepositScreen() {
           />
         ) : null}
 
-        {settlement.status === 'settled' ? (
+        {settlement.status === "settled" ? (
           <View style={styles.settled}>
             <Text style={styles.settledText}>
-              Settled{settlement.settledOn ? ` on ${formatDate(settlement.settledOn)}` : ''}.{' '}
+              Settled{settlement.settledOn ? ` on ${formatDate(settlement.settledOn)}` : ""}.{" "}
               {formatLKR(totals.returning)} returned.
             </Text>
           </View>
         ) : null}
 
-        {role === 'landlord' && settlement.status === 'disputed' ? (
+        {role === "landlord" && settlement.status === "disputed" ? (
           <Text style={styles.disputeNote}>
             You cannot settle while something is disputed. Either withdraw the deduction or talk it
             through — the comparison screen is the useful thing to argue from.
@@ -307,12 +317,12 @@ export default function DepositScreen() {
   );
 }
 
-const STATUS_LABEL: Record<DepositSettlement['status'], string> = {
-  not_started: 'Not started',
-  proposed: 'Awaiting your response',
-  disputed: 'Disputed',
-  agreed: 'Agreed',
-  settled: 'Settled',
+const STATUS_LABEL: Record<DepositSettlement["status"], string> = {
+  not_started: "Not started",
+  proposed: "Awaiting your response",
+  disputed: "Disputed",
+  agreed: "Agreed",
+  settled: "Settled",
 };
 
 const styles = StyleSheet.create({
@@ -321,15 +331,15 @@ const styles = StyleSheet.create({
   summary: { marginTop: space.sm },
   big: { ...type.moneyLarge, fontSize: 32, marginTop: space.xs, marginBottom: space.lg },
   mathRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: space.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: color.border,
   },
   mathValue: { ...type.money, fontSize: 15 },
-  statusRow: { flexDirection: 'row', gap: space.xs, marginTop: space.lg },
+  statusRow: { flexDirection: "row", gap: space.xs, marginTop: space.lg },
   compare: { marginTop: space.lg },
 
   list: { gap: space.sm },
@@ -340,8 +350,8 @@ const styles = StyleSheet.create({
     borderColor: color.border,
     padding: space.lg,
   },
-  deductionTop: { flexDirection: 'row', justifyContent: 'space-between', gap: space.md },
-  deductionLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: color.text },
+  deductionTop: { flexDirection: "row", justifyContent: "space-between", gap: space.md },
+  deductionLabel: { flex: 1, fontSize: 15, fontWeight: "600", color: color.text },
   deductionAmount: { ...type.money },
   reason: { ...type.caption, fontSize: 13.5, marginTop: space.xs, lineHeight: 19 },
 
@@ -351,27 +361,27 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     padding: space.md,
   },
-  evidenceLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.6, color: color.textFaint },
+  evidenceLabel: { fontSize: 10, fontWeight: "700", letterSpacing: 0.6, color: color.textFaint },
   evidenceValue: { fontSize: 13, color: color.textMuted, marginTop: 2 },
-  evidenceNone: { backgroundColor: '#FCF1DC' },
-  evidenceNoneText: { fontSize: 13, color: '#8A5A00' },
+  evidenceNone: { backgroundColor: "#FCF1DC" },
+  evidenceNoneText: { fontSize: 13, color: "#8A5A00" },
 
-  respond: { flexDirection: 'row', gap: space.sm, marginTop: space.lg },
-  waiting: { ...type.caption, fontSize: 12.5, marginTop: space.md, fontStyle: 'italic' },
+  respond: { flexDirection: "row", gap: space.sm, marginTop: space.lg },
+  waiting: { ...type.caption, fontSize: 12.5, marginTop: space.md, fontStyle: "italic" },
   answered: { marginTop: space.md },
 
   addButton: { marginTop: space.xl },
   addForm: { marginTop: space.lg },
   evidenceHint: { ...type.caption, fontSize: 12, lineHeight: 18, marginBottom: space.lg },
-  addActions: { flexDirection: 'row', gap: space.sm },
+  addActions: { flexDirection: "row", gap: space.sm },
   settleButton: { marginTop: space.lg },
   settled: {
     marginTop: space.lg,
-    backgroundColor: '#E6F2EB',
+    backgroundColor: "#E6F2EB",
     borderRadius: radius.md,
     padding: space.lg,
   },
-  settledText: { fontSize: 14, color: '#1B5E3F', fontWeight: '600', lineHeight: 20 },
+  settledText: { fontSize: 14, color: "#1B5E3F", fontWeight: "600", lineHeight: 20 },
   disputeNote: { ...type.caption, fontSize: 12.5, marginTop: space.lg, lineHeight: 18 },
 
   footnote: { ...type.caption, fontSize: 12, marginTop: space.xl, lineHeight: 18 },
