@@ -21,7 +21,7 @@ import type {
   TenancyDraft,
   TenancySummary,
   UUID,
-} from './types';
+} from "./types";
 import type {
   Agreement,
   AreaComparison,
@@ -44,7 +44,7 @@ import type {
   Review,
   Role,
   Thread,
-} from './lifecycleTypes';
+} from "./lifecycleTypes";
 
 export interface Session {
   userId: UUID;
@@ -154,7 +154,7 @@ export interface Repository {
   startThread(input: {
     tenancyId: UUID;
     subject: string;
-    about: Thread['about'];
+    about: Thread["about"];
     by: Role;
     body: string;
   }): Promise<Thread>;
@@ -173,7 +173,7 @@ export interface Repository {
   listReviews(tenancyId: UUID): Promise<Review[]>;
   leaveReview(input: {
     tenancyId: UUID;
-    direction: Review['direction'];
+    direction: Review["direction"];
     rating: number;
     body: string;
   }): Promise<Review>;

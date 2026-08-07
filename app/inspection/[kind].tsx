@@ -1,14 +1,14 @@
-import React, { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
+import React, { useMemo, useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, router, useLocalSearchParams } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 
-import { AiCard, AiDisclaimer, PhotoTile, Pill, severityTone } from '@/components/lifecycle';
-import { Button, Card, ErrorState, LoadingState, SectionLabel } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatDate } from '@/data/ledger';
-import type { InspectionKind, InspectionSession } from '@/data/lifecycleTypes';
-import { color, radius, space, type } from '@/theme';
+import { AiCard, AiDisclaimer, PhotoTile, Pill, severityTone } from "@/components/lifecycle";
+import { Button, Card, ErrorState, LoadingState, SectionLabel } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatDate } from "@/data/ledger";
+import type { InspectionKind, InspectionSession } from "@/data/lifecycleTypes";
+import { color, radius, space, type } from "@/theme";
 
 /**
  * The inspection checklist.
@@ -21,12 +21,16 @@ import { color, radius, space, type } from '@/theme';
  */
 export default function InspectionScreen() {
   const { kind } = useLocalSearchParams<{ kind: string }>();
-  const inspectionKind: InspectionKind = kind === 'move_out' ? 'move_out' : 'move_in';
+  const inspectionKind: InspectionKind = kind === "move_out" ? "move_out" : "move_in";
 
   const { tenancy, repo, invalidate } = useApp();
   const tenancyId = tenancy?.tenancy.id ?? null;
 
-  const { data: session, loading, error } = useAsync<InspectionSession | null>(
+  const {
+    data: session,
+    loading,
+    error,
+  } = useAsync<InspectionSession | null>(
     async () => (tenancyId ? repo.getInspection(tenancyId, inspectionKind) : null),
     [tenancyId, inspectionKind],
   );
@@ -35,7 +39,7 @@ export default function InspectionScreen() {
 
   const rooms = useMemo(() => {
     if (!session) return [];
-    const byRoom = new Map<string, InspectionSession['areas']>();
+    const byRoom = new Map<string, InspectionSession["areas"]>();
     for (const area of session.areas) {
       byRoom.set(area.room, [...(byRoom.get(area.room) ?? []), area]);
     }
@@ -57,13 +61,16 @@ export default function InspectionScreen() {
     if (useLibrary) {
       const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!lib.granted) {
-        Alert.alert('Permission needed', 'RentLoop needs the camera or your photos to record evidence.');
+        Alert.alert(
+          "Permission needed",
+          "RentLoop needs the camera or your photos to record evidence.",
+        );
         return;
       }
     }
 
     const result = useLibrary
-      ? await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7 })
+      ? await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.7 })
       : await ImagePicker.launchCameraAsync({ quality: 0.7 });
 
     if (result.canceled || !result.assets[0]) return;
@@ -94,7 +101,7 @@ export default function InspectionScreen() {
 
   const captured = session.areas.filter((a) => a.photos.length > 0).length;
   const missingRequired = session.areas.filter((a) => a.required && a.photos.length === 0).length;
-  const title = inspectionKind === 'move_in' ? 'Move-in inspection' : 'Move-out inspection';
+  const title = inspectionKind === "move_in" ? "Move-in inspection" : "Move-out inspection";
 
   return (
     <>
@@ -104,7 +111,7 @@ export default function InspectionScreen() {
           <View style={styles.headerTop}>
             <View style={{ flex: 1 }}>
               <Text style={type.label}>
-                {session.status === 'complete' ? 'Complete' : 'In progress'}
+                {session.status === "complete" ? "Complete" : "In progress"}
               </Text>
               <Text style={styles.progress}>
                 {captured} of {session.areas.length} areas
@@ -130,9 +137,9 @@ export default function InspectionScreen() {
           </View>
 
           <Text style={styles.purpose}>
-            {inspectionKind === 'move_in'
-              ? 'These photos are timestamped. At move-out they are what decides whether damage was yours.'
-              : 'These get compared against your move-in photos, area by area.'}
+            {inspectionKind === "move_in"
+              ? "These photos are timestamped. At move-out they are what decides whether damage was yours."
+              : "These get compared against your move-in photos, area by area."}
           </Text>
         </Card>
 
@@ -175,10 +182,10 @@ export default function InspectionScreen() {
                       ) : (
                         <Text style={styles.areaHint}>
                           {area.photos.length > 0
-                            ? `${area.photos.length} photo${area.photos.length === 1 ? '' : 's'}`
+                            ? `${area.photos.length} photo${area.photos.length === 1 ? "" : "s"}`
                             : area.required
-                              ? 'Required'
-                              : 'Optional'}
+                              ? "Required"
+                              : "Optional"}
                         </Text>
                       )}
                       {photo && photo.findings.length > 0 ? (
@@ -204,15 +211,17 @@ export default function InspectionScreen() {
           </View>
         ))}
 
-        {session.status !== 'complete' ? (
+        {session.status !== "complete" ? (
           <Button
-            label={missingRequired > 0 ? `Finish anyway (${missingRequired} missing)` : 'Mark complete'}
-            variant={missingRequired > 0 ? 'secondary' : 'primary'}
+            label={
+              missingRequired > 0 ? `Finish anyway (${missingRequired} missing)` : "Mark complete"
+            }
+            variant={missingRequired > 0 ? "secondary" : "primary"}
             onPress={complete}
             loading={busy}
             style={styles.finish}
           />
-        ) : inspectionKind === 'move_out' ? (
+        ) : inspectionKind === "move_out" ? (
           <Button
             label="Compare with move-in"
             onPress={() => router.push(`/inspection/compare?tenancyId=${session.tenancy_id}`)}
@@ -230,24 +239,24 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: color.bg },
   content: { padding: space.xl, paddingBottom: space.xxxl * 2 },
 
-  headerTop: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
+  headerTop: { flexDirection: "row", alignItems: "flex-start", gap: space.md },
   progress: { ...type.moneyLarge, fontSize: 22, marginTop: space.xs },
   bar: {
     height: 6,
     borderRadius: 3,
     backgroundColor: color.surfaceSunken,
     marginTop: space.lg,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
-  barFill: { height: '100%', backgroundColor: color.accent, borderRadius: 3 },
+  barFill: { height: "100%", backgroundColor: color.accent, borderRadius: 3 },
   purpose: { ...type.caption, fontSize: 13, lineHeight: 19, marginTop: space.md },
 
   suggestions: { gap: space.sm, marginTop: space.lg },
 
   list: { gap: space.sm },
   area: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: space.md,
     backgroundColor: color.surface,
     borderRadius: radius.md,
@@ -261,18 +270,18 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: radius.sm,
     borderWidth: 1,
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
     borderColor: color.borderStrong,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   placeholderGlyph: { fontSize: 20, color: color.textFaint },
   areaBody: { flex: 1, gap: 2 },
-  areaName: { fontSize: 15, fontWeight: '600', color: color.text },
+  areaName: { fontSize: 15, fontWeight: "600", color: color.text },
   areaHint: { fontSize: 12.5, color: color.textFaint },
-  areaNote: { fontSize: 12.5, color: color.textMuted, fontStyle: 'italic' },
-  findings: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: space.xs },
-  requiredDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#C79A2E' },
+  areaNote: { fontSize: 12.5, color: color.textMuted, fontStyle: "italic" },
+  findings: { flexDirection: "row", flexWrap: "wrap", gap: space.xs, marginTop: space.xs },
+  requiredDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#C79A2E" },
 
   finish: { marginTop: space.xxl },
 });

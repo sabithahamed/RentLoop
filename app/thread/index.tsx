@@ -1,13 +1,13 @@
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, router } from 'expo-router';
+import React from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, router } from "expo-router";
 
-import { EmptyNote, Pill } from '@/components/lifecycle';
-import { Button, Card, LoadingState } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatDate } from '@/data/ledger';
-import type { Role, Thread } from '@/data/lifecycleTypes';
-import { color, radius, space, type } from '@/theme';
+import { EmptyNote, Pill } from "@/components/lifecycle";
+import { Button, Card, LoadingState } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatDate } from "@/data/ledger";
+import type { Role, Thread } from "@/data/lifecycleTypes";
+import { color, radius, space, type } from "@/theme";
 
 export default function ThreadListScreen() {
   const { tenancy, repo, role } = useApp();
@@ -20,7 +20,7 @@ export default function ThreadListScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Messages' }} />
+      <Stack.Screen options={{ title: "Messages" }} />
       <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
         <Text style={[type.caption, styles.intro]}>
           Each conversation stays attached to the payment or repair it is about.
@@ -28,7 +28,7 @@ export default function ThreadListScreen() {
 
         <Button
           label="Start a conversation"
-          onPress={() => router.push('/thread/new')}
+          onPress={() => router.push("/thread/new")}
           style={styles.compose}
         />
 
@@ -52,18 +52,18 @@ export default function ThreadListScreen() {
   );
 }
 
-const ABOUT_LABEL: Record<Thread['about']['type'], string> = {
-  general: 'General',
-  payment: 'Rent',
-  maintenance: 'Repair',
-  inspection: 'Inspection',
+const ABOUT_LABEL: Record<Thread["about"]["type"], string> = {
+  general: "General",
+  payment: "Rent",
+  maintenance: "Repair",
+  inspection: "Inspection",
 };
 
 const ABOUT_TONE = {
-  general: 'neutral',
-  payment: 'info',
-  maintenance: 'warn',
-  inspection: 'neutral',
+  general: "neutral",
+  payment: "info",
+  maintenance: "warn",
+  inspection: "neutral",
 } as const;
 
 export function ThreadRow({ thread, viewerRole }: { thread: Thread; viewerRole: Role }) {
@@ -84,7 +84,7 @@ export function ThreadRow({ thread, viewerRole }: { thread: Thread; viewerRole: 
       </View>
 
       <Text style={styles.preview} numberOfLines={2}>
-        {last.by === viewerRole ? 'You: ' : ''}
+        {last.by === viewerRole ? "You: " : ""}
         {last.body}
       </Text>
 
@@ -112,15 +112,15 @@ const styles = StyleSheet.create({
     gap: space.xs,
   },
   rowPressed: { backgroundColor: color.surfaceSunken },
-  rowTop: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  subject: { flex: 1, fontSize: 15, fontWeight: '600', color: color.text },
+  rowTop: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  subject: { flex: 1, fontSize: 15, fontWeight: "600", color: color.text },
   subjectUnread: { color: color.accent },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: color.accent },
   preview: { fontSize: 13.5, color: color.textMuted, lineHeight: 19 },
   rowBottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginTop: space.xs,
   },
   time: { fontSize: 12, color: color.textFaint },

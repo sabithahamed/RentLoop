@@ -1,13 +1,13 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import React from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 
-import { NavRow, Pill, Stat } from '@/components/lifecycle';
-import { Button, Card, ErrorState, LoadingState, SectionLabel } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatLKR } from '@/data/ledger';
-import type { PortfolioEntry } from '@/data/lifecycleTypes';
-import { color, radius, space, type } from '@/theme';
+import { NavRow, Pill, Stat } from "@/components/lifecycle";
+import { Button, Card, ErrorState, LoadingState, SectionLabel } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatLKR } from "@/data/ledger";
+import type { PortfolioEntry } from "@/data/lifecycleTypes";
+import { color, radius, space, type } from "@/theme";
 
 /**
  * One property, from the landlord's side.
@@ -21,10 +21,11 @@ export default function LandlordTenancyScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { repo } = useApp();
 
-  const { data: entry, loading, error } = useAsync<PortfolioEntry>(
-    () => repo.getPortfolioEntry(id),
-    [id],
-  );
+  const {
+    data: entry,
+    loading,
+    error,
+  } = useAsync<PortfolioEntry>(() => repo.getPortfolioEntry(id), [id]);
 
   if (loading && !entry) return <LoadingState />;
   if (error) return <ErrorState message={error} />;
@@ -38,14 +39,14 @@ export default function LandlordTenancyScreen() {
       <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
         <Card>
           <Text style={type.title}>{entry.propertyLabel}</Text>
-          <Text style={[type.caption, styles.city]}>{entry.city ?? 'No city recorded'}</Text>
+          <Text style={[type.caption, styles.city]}>{entry.city ?? "No city recorded"}</Text>
 
           <View style={styles.stats}>
             <Stat value={formatLKR(entry.rentCents)} label="Monthly rent" />
             <Stat
-              value={behind ? formatLKR(entry.arrearsCents) : 'None'}
-              label={behind ? `Late · ${entry.monthsBehind} months` : 'Arrears'}
-              tone={behind ? 'bad' : undefined}
+              value={behind ? formatLKR(entry.arrearsCents) : "None"}
+              label={behind ? `Late · ${entry.monthsBehind} months` : "Arrears"}
+              tone={behind ? "bad" : undefined}
             />
           </View>
 
@@ -59,8 +60,8 @@ export default function LandlordTenancyScreen() {
               <Pill label={`${entry.openTicketCount} open repair`} tone="warn" />
             ) : null}
             <Pill
-              label={entry.connected ? 'Connected' : 'Tenant not on RentLoop'}
-              tone={entry.connected ? 'info' : 'neutral'}
+              label={entry.connected ? "Connected" : "Tenant not on RentLoop"}
+              tone={entry.connected ? "info" : "neutral"}
             />
           </View>
         </Card>
@@ -70,8 +71,8 @@ export default function LandlordTenancyScreen() {
           <Text style={type.heading}>{entry.tenantName}</Text>
           {entry.connected ? (
             <Text style={styles.body}>
-              Records the rent and repairs from their side, so this ledger stays current without
-              you chasing anything.
+              Records the rent and repairs from their side, so this ledger stays current without you
+              chasing anything.
             </Text>
           ) : (
             <>
@@ -82,7 +83,7 @@ export default function LandlordTenancyScreen() {
               <Button
                 label="Invite this tenant"
                 variant="secondary"
-                onPress={() => router.push('/invite')}
+                onPress={() => router.push("/invite")}
                 style={styles.inviteButton}
               />
             </>
@@ -99,7 +100,7 @@ export default function LandlordTenancyScreen() {
             <Button
               label="Message about the rent"
               variant="secondary"
-              onPress={() => router.push('/thread/new?about=payment')}
+              onPress={() => router.push("/thread/new?about=payment")}
               style={styles.arrearsButton}
             />
           </View>
@@ -110,23 +111,21 @@ export default function LandlordTenancyScreen() {
           <NavRow
             title="Repairs"
             subtitle={
-              entry.openTicketCount > 0
-                ? `${entry.openTicketCount} waiting on you`
-                : 'Nothing open'
+              entry.openTicketCount > 0 ? `${entry.openTicketCount} waiting on you` : "Nothing open"
             }
             badge={entry.openTicketCount > 0 ? String(entry.openTicketCount) : null}
-            tone={entry.openTicketCount > 0 ? 'attention' : 'default'}
-            onPress={() => router.push('/landlord/repairs')}
+            tone={entry.openTicketCount > 0 ? "attention" : "default"}
+            onPress={() => router.push("/landlord/repairs")}
           />
           <NavRow
             title="Messages"
             subtitle="Conversations on this tenancy"
-            onPress={() => router.push('/landlord/inbox')}
+            onPress={() => router.push("/landlord/inbox")}
           />
           <NavRow
             title="Deposit settlement"
             subtitle="Deductions and evidence at move-out"
-            onPress={() => router.push('/deposit')}
+            onPress={() => router.push("/deposit")}
           />
         </View>
 
@@ -144,8 +143,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: color.bg },
   content: { padding: space.xl, paddingBottom: space.xxxl * 2 },
   city: { marginTop: 2 },
-  stats: { flexDirection: 'row', gap: space.lg, marginTop: space.xl },
-  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: space.lg },
+  stats: { flexDirection: "row", gap: space.lg, marginTop: space.xl },
+  pills: { flexDirection: "row", flexWrap: "wrap", gap: space.xs, marginTop: space.lg },
   body: { ...type.caption, fontSize: 13.5, lineHeight: 20, marginTop: space.sm },
   inviteButton: { marginTop: space.lg },
 
@@ -155,10 +154,22 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: space.lg,
   },
-  arrearsTitle: { fontSize: 17, fontWeight: '700', color: color.danger },
-  arrearsBody: { fontSize: 13, color: color.danger, opacity: 0.9, marginTop: space.xs, lineHeight: 19 },
+  arrearsTitle: { fontSize: 17, fontWeight: "700", color: color.danger },
+  arrearsBody: {
+    fontSize: 13,
+    color: color.danger,
+    opacity: 0.9,
+    marginTop: space.xs,
+    lineHeight: 19,
+  },
   arrearsButton: { marginTop: space.lg },
 
   rows: { gap: space.sm },
-  footnote: { ...type.caption, fontSize: 12, marginTop: space.xl, lineHeight: 18, fontStyle: 'italic' },
+  footnote: {
+    ...type.caption,
+    fontSize: 12,
+    marginTop: space.xl,
+    lineHeight: 18,
+    fontStyle: "italic",
+  },
 });

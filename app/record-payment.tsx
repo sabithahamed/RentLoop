@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -8,21 +8,28 @@ import {
   StyleSheet,
   Text,
   View,
-} from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
+} from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 
-import { SlipImage } from '@/components/SlipImage';
-import { Button, ErrorState, Field, LoadingState, SectionLabel, SegmentedControl } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatLKR, formatPeriodMonth, parseLKRInput, todayISO } from '@/data/ledger';
+import { SlipImage } from "@/components/SlipImage";
+import {
+  Button,
+  ErrorState,
+  Field,
+  LoadingState,
+  SectionLabel,
+  SegmentedControl,
+} from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatLKR, formatPeriodMonth, parseLKRInput, todayISO } from "@/data/ledger";
 import {
   PAYMENT_METHODS,
   PAYMENT_METHOD_LABELS,
   type PaymentMethod,
   type PeriodDetail,
-} from '@/data/types';
-import { color, radius, space, type } from '@/theme';
+} from "@/data/types";
+import { color, radius, space, type } from "@/theme";
 
 export default function RecordPaymentScreen() {
   const { periodId } = useLocalSearchParams<{ periodId: string }>();
@@ -33,11 +40,11 @@ export default function RecordPaymentScreen() {
     [periodId],
   );
 
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState("");
   const [paidOn, setPaidOn] = useState(todayISO());
-  const [method, setMethod] = useState<PaymentMethod>('bank_transfer');
-  const [reference, setReference] = useState('');
-  const [note, setNote] = useState('');
+  const [method, setMethod] = useState<PaymentMethod>("bank_transfer");
+  const [reference, setReference] = useState("");
+  const [note, setNote] = useState("");
   const [receiptUri, setReceiptUri] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -45,7 +52,7 @@ export default function RecordPaymentScreen() {
   // Prefill with what is actually outstanding — but leave it editable, which is
   // what makes a partial payment a first-class thing rather than an error.
   useEffect(() => {
-    if (!data || amount !== '') return;
+    if (!data || amount !== "") return;
     const outstanding = Math.max(data.period.balance_cents, 0);
     const prefill = outstanding > 0 ? outstanding : data.period.amount_due_cents;
     setAmount(String(prefill / 100));
@@ -58,14 +65,14 @@ export default function RecordPaymentScreen() {
         : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (!permission.granted) {
-        setFormError('RentLoop needs permission to add a photo of the slip.');
+        setFormError("RentLoop needs permission to add a photo of the slip.");
         return;
       }
 
       const result = fromCamera
         ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
         : await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
+            mediaTypes: ["images"],
             quality: 0.7,
           });
 
@@ -75,17 +82,17 @@ export default function RecordPaymentScreen() {
       }
     };
 
-    Alert.alert('Add the bank slip', 'Where is the photo?', [
-      { text: 'Take a photo', onPress: () => void choose(true) },
-      { text: 'Choose from library', onPress: () => void choose(false) },
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert("Add the bank slip", "Where is the photo?", [
+      { text: "Take a photo", onPress: () => void choose(true) },
+      { text: "Choose from library", onPress: () => void choose(false) },
+      { text: "Cancel", style: "cancel" },
     ]);
   };
 
   const submit = async () => {
     const cents = parseLKRInput(amount);
     if (cents === null || cents <= 0) {
-      setFormError('Enter the amount you paid');
+      setFormError("Enter the amount you paid");
       return;
     }
 
@@ -104,7 +111,7 @@ export default function RecordPaymentScreen() {
       invalidate();
       router.back();
     } catch (e) {
-      setFormError(e instanceof Error ? e.message : 'Could not save the payment');
+      setFormError(e instanceof Error ? e.message : "Could not save the payment");
     } finally {
       setBusy(false);
     }
@@ -121,7 +128,7 @@ export default function RecordPaymentScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={60}
     >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -233,35 +240,35 @@ const styles = StyleSheet.create({
   spaced: { marginTop: space.xs },
 
   partialNote: {
-    backgroundColor: '#FCF1DC',
+    backgroundColor: "#FCF1DC",
     borderRadius: radius.sm,
     padding: space.md,
     marginTop: -space.sm,
     marginBottom: space.lg,
   },
-  partialText: { fontSize: 13, color: '#8A5A00', lineHeight: 18 },
+  partialText: { fontSize: 13, color: "#8A5A00", lineHeight: 18 },
 
   attach: {
     borderWidth: 1,
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
     borderColor: color.borderStrong,
     borderRadius: radius.md,
     padding: space.lg,
-    alignItems: 'center',
+    alignItems: "center",
     backgroundColor: color.surface,
   },
   attachPressed: { backgroundColor: color.surfaceSunken },
-  attachTitle: { fontSize: 15, fontWeight: '600', color: color.accent },
+  attachTitle: { fontSize: 15, fontWeight: "600", color: color.accent },
   attachSub: {
     ...type.caption,
     fontSize: 12.5,
     marginTop: space.xs,
-    textAlign: 'center',
+    textAlign: "center",
   },
 
   slipPreview: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: space.lg,
     backgroundColor: color.surface,
     borderRadius: radius.md,
@@ -270,7 +277,7 @@ const styles = StyleSheet.create({
     padding: space.md,
   },
   slipPreviewBody: { flex: 1, gap: space.xs },
-  remove: { fontSize: 13, fontWeight: '600', color: color.danger },
+  remove: { fontSize: 13, fontWeight: "600", color: color.danger },
 
   formError: { ...type.caption, color: color.danger, marginTop: space.md },
   submit: { marginTop: space.xxl },

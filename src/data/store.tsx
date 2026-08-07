@@ -11,19 +11,12 @@
  * A real app would reach for React Query here; a prototype does not need to.
  */
 
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import { mockRepository, resetToSeed } from './mock/mockRepository';
-import type { Repository, Session, SignUpInput } from './repository';
-import type { Role } from './lifecycleTypes';
-import type { TenancySummary } from './types';
+import { mockRepository, resetToSeed } from "./mock/mockRepository";
+import type { Repository, Session, SignUpInput } from "./repository";
+import type { Role } from "./lifecycleTypes";
+import type { TenancySummary } from "./types";
 
 interface AppContextValue {
   repo: Repository;
@@ -64,13 +57,13 @@ const repo: Repository = mockRepository;
  * the landlord view is just friction. `localStorage` only exists on web; on a
  * device this quietly does nothing, which is fine.
  */
-const ROLE_KEY = 'rentloop.role';
+const ROLE_KEY = "rentloop.role";
 
 function readStoredRole(): Role {
   try {
-    return globalThis.localStorage?.getItem(ROLE_KEY) === 'landlord' ? 'landlord' : 'tenant';
+    return globalThis.localStorage?.getItem(ROLE_KEY) === "landlord" ? "landlord" : "tenant";
   } catch {
-    return 'tenant';
+    return "tenant";
   }
 }
 
@@ -178,7 +171,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
 export function useApp(): AppContextValue {
   const value = useContext(AppContext);
-  if (!value) throw new Error('useApp must be used inside <AppProvider>');
+  if (!value) throw new Error("useApp must be used inside <AppProvider>");
   return value;
 }
 
@@ -204,7 +197,7 @@ export function useAsync<T>(
         if (!cancelled) setData(result);
       })
       .catch((e: unknown) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Something went wrong');
+        if (!cancelled) setError(e instanceof Error ? e.message : "Something went wrong");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -212,7 +205,6 @@ export function useAsync<T>(
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, revision]);
 
   return { data, loading, error };

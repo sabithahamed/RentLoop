@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -8,15 +8,15 @@ import {
   Text,
   TextInput,
   View,
-} from 'react-native';
-import { Stack, useLocalSearchParams } from 'expo-router';
+} from "react-native";
+import { Stack, useLocalSearchParams } from "expo-router";
 
-import { Pill } from '@/components/lifecycle';
-import { ErrorState, LoadingState } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatDate } from '@/data/ledger';
-import type { Thread } from '@/data/lifecycleTypes';
-import { color, radius, space, type } from '@/theme';
+import { Pill } from "@/components/lifecycle";
+import { ErrorState, LoadingState } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatDate } from "@/data/ledger";
+import type { Thread } from "@/data/lifecycleTypes";
+import { color, radius, space, type } from "@/theme";
 
 export default function ThreadScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,7 +24,7 @@ export default function ThreadScreen() {
 
   const { data: thread, loading, error } = useAsync<Thread>(() => repo.getThread(id), [id]);
 
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
 
   const send = async () => {
@@ -32,7 +32,7 @@ export default function ThreadScreen() {
     setBusy(true);
     try {
       await repo.sendMessage(id, role, draft.trim());
-      setDraft('');
+      setDraft("");
       invalidate();
     } finally {
       setBusy(false);
@@ -48,20 +48,20 @@ export default function ThreadScreen() {
       <Stack.Screen options={{ title: thread.subject }} />
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={90}
       >
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.about}>
             <Pill
               label={
-                thread.about.type === 'maintenance'
-                  ? 'About a repair'
-                  : thread.about.type === 'payment'
-                    ? 'About rent'
-                    : 'General'
+                thread.about.type === "maintenance"
+                  ? "About a repair"
+                  : thread.about.type === "payment"
+                    ? "About rent"
+                    : "General"
               }
-              tone={thread.about.type === 'maintenance' ? 'warn' : 'info'}
+              tone={thread.about.type === "maintenance" ? "warn" : "info"}
             />
             <Text style={styles.aboutNote}>
               Kept with the record it belongs to, so it is still findable in a year.
@@ -118,13 +118,13 @@ export default function ThreadScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: color.bg },
   content: { padding: space.xl, paddingBottom: space.xl },
-  about: { alignItems: 'center', gap: space.sm, marginBottom: space.xl },
-  aboutNote: { ...type.caption, fontSize: 12, textAlign: 'center' },
+  about: { alignItems: "center", gap: space.sm, marginBottom: space.xl },
+  aboutNote: { ...type.caption, fontSize: 12, textAlign: "center" },
 
-  bubbleRow: { flexDirection: 'row', marginBottom: space.md },
-  bubbleRowMine: { justifyContent: 'flex-end' },
-  bubbleRowTheirs: { justifyContent: 'flex-start' },
-  bubble: { maxWidth: '82%', borderRadius: radius.md, padding: space.md },
+  bubbleRow: { flexDirection: "row", marginBottom: space.md },
+  bubbleRowMine: { justifyContent: "flex-end" },
+  bubbleRowTheirs: { justifyContent: "flex-start" },
+  bubble: { maxWidth: "82%", borderRadius: radius.md, padding: space.md },
   bubbleMine: { backgroundColor: color.accent, borderBottomRightRadius: 4 },
   bubbleTheirs: {
     backgroundColor: color.surface,
@@ -135,11 +135,11 @@ const styles = StyleSheet.create({
   bubbleText: { fontSize: 14.5, color: color.text, lineHeight: 20 },
   bubbleTextMine: { color: color.textInverse },
   bubbleTime: { fontSize: 11, color: color.textFaint, marginTop: space.xs },
-  bubbleTimeMine: { color: 'rgba(255,255,255,0.75)' },
+  bubbleTimeMine: { color: "rgba(255,255,255,0.75)" },
 
   composer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+    flexDirection: "row",
+    alignItems: "flex-end",
     gap: space.sm,
     padding: space.md,
     backgroundColor: color.surface,
@@ -163,9 +163,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.lg,
     borderRadius: radius.md,
     backgroundColor: color.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   sendDisabled: { opacity: 0.4 },
-  sendText: { color: color.textInverse, fontWeight: '600', fontSize: 14 },
+  sendText: { color: color.textInverse, fontWeight: "600", fontSize: 14 },
 });

@@ -1,23 +1,20 @@
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import React from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 
-import { SlipImage } from '@/components/SlipImage';
-import { StatusChip } from '@/components/StatusChip';
-import { Button, Card, Divider, ErrorState, LoadingState, SectionLabel } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { describeDueDate, formatDate, formatLKR, formatPeriodMonth } from '@/data/ledger';
-import { PAYMENT_METHOD_LABELS, type PeriodDetail } from '@/data/types';
-import { color, radius, space, type } from '@/theme';
+import { SlipImage } from "@/components/SlipImage";
+import { StatusChip } from "@/components/StatusChip";
+import { Button, Card, Divider, ErrorState, LoadingState, SectionLabel } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { describeDueDate, formatDate, formatLKR, formatPeriodMonth } from "@/data/ledger";
+import { PAYMENT_METHOD_LABELS, type PeriodDetail } from "@/data/types";
+import { color, radius, space, type } from "@/theme";
 
 export default function PeriodDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { repo } = useApp();
 
-  const { data, loading, error } = useAsync<PeriodDetail>(
-    () => repo.getPeriodDetail(id),
-    [id],
-  );
+  const { data, loading, error } = useAsync<PeriodDetail>(() => repo.getPeriodDetail(id), [id]);
 
   if (loading && !data) return <LoadingState />;
   if (error) return <ErrorState message={error} />;
@@ -33,7 +30,7 @@ export default function PeriodDetailScreen() {
         <Card>
           <View style={styles.summaryTop}>
             <View>
-              <Text style={type.label}>{settled ? 'Settled' : 'Still owed'}</Text>
+              <Text style={type.label}>{settled ? "Settled" : "Still owed"}</Text>
               <Text style={styles.bigAmount}>
                 {formatLKR(settled ? period.paid_cents : period.balance_cents)}
               </Text>
@@ -50,15 +47,15 @@ export default function PeriodDetailScreen() {
               label="Due date"
               value={formatDate(period.due_date)}
               sub={period.paid_cents === 0 ? describeDueDate(period.due_date) : undefined}
-              subDanger={period.status === 'overdue'}
+              subDanger={period.status === "overdue"}
             />
           </View>
         </Card>
 
         <SectionLabel>
           {payments.length === 0
-            ? 'No payments yet'
-            : `${payments.length} ${payments.length === 1 ? 'payment' : 'payments'}`}
+            ? "No payments yet"
+            : `${payments.length} ${payments.length === 1 ? "payment" : "payments"}`}
         </SectionLabel>
 
         {payments.length === 0 ? (
@@ -87,7 +84,7 @@ export default function PeriodDetailScreen() {
                   />
                 ) : (
                   <View style={styles.noSlip}>
-                    <Text style={styles.noSlipText}>No{'\n'}slip</Text>
+                    <Text style={styles.noSlipText}>No{"\n"}slip</Text>
                   </View>
                 )}
 
@@ -113,8 +110,8 @@ export default function PeriodDetailScreen() {
         )}
 
         <Button
-          label={settled ? 'Record another payment' : 'Record a payment'}
-          variant={settled ? 'secondary' : 'primary'}
+          label={settled ? "Record another payment" : "Record a payment"}
+          variant={settled ? "secondary" : "primary"}
           onPress={() => router.push(`/record-payment?periodId=${period.id}`)}
           style={styles.action}
         />
@@ -150,14 +147,14 @@ const styles = StyleSheet.create({
   content: { padding: space.xl, paddingBottom: space.xxxl * 2 },
 
   summaryTop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
     marginBottom: space.lg,
   },
   bigAmount: { ...type.moneyLarge, marginTop: space.xs },
 
-  metaRow: { flexDirection: 'row', marginTop: space.lg, gap: space.md },
+  metaRow: { flexDirection: "row", marginTop: space.lg, gap: space.md },
   meta: { flex: 1 },
   metaValue: { fontSize: 15, marginTop: space.xs },
   metaSub: { fontSize: 12, color: color.textMuted, marginTop: 2 },
@@ -166,8 +163,8 @@ const styles = StyleSheet.create({
 
   paymentList: { gap: space.sm },
   paymentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: space.lg,
     backgroundColor: color.surface,
     borderRadius: radius.md,
@@ -178,8 +175,8 @@ const styles = StyleSheet.create({
   paymentRowPressed: { backgroundColor: color.surfaceSunken },
   paymentBody: { flex: 1, gap: 2 },
   paymentSub: { fontSize: 13 },
-  reference: { fontSize: 12, color: color.textFaint, fontVariant: ['tabular-nums'] },
-  note: { fontSize: 12.5, fontStyle: 'italic' },
+  reference: { fontSize: 12, color: color.textFaint, fontVariant: ["tabular-nums"] },
+  note: { fontSize: 12.5, fontStyle: "italic" },
   chevron: { fontSize: 24, color: color.textFaint, marginRight: space.xs },
 
   noSlip: {
@@ -187,12 +184,12 @@ const styles = StyleSheet.create({
     height: 84,
     borderRadius: radius.sm,
     borderWidth: 1,
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
     borderColor: color.borderStrong,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
-  noSlipText: { fontSize: 11, color: color.textFaint, textAlign: 'center', lineHeight: 14 },
+  noSlipText: { fontSize: 11, color: color.textFaint, textAlign: "center", lineHeight: 14 },
 
   action: { marginTop: space.xxl },
 });

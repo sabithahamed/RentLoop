@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, router } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
+import React, { useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, router } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 
-import { AiDisclaimer, EmptyNote, Pill } from '@/components/lifecycle';
-import { Button, Card, ErrorState, LoadingState, SectionLabel } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import type { Agreement } from '@/data/lifecycleTypes';
-import { color, radius, space, type } from '@/theme';
+import { AiDisclaimer, EmptyNote, Pill } from "@/components/lifecycle";
+import { Button, Card, ErrorState, LoadingState, SectionLabel } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import type { Agreement } from "@/data/lifecycleTypes";
+import { color, radius, space, type } from "@/theme";
 
 /**
  * The agreement, as read by the assistant and confirmed by the tenant.
@@ -21,7 +21,11 @@ export default function AgreementScreen() {
   const { tenancy, repo, invalidate } = useApp();
   const tenancyId = tenancy?.tenancy.id ?? null;
 
-  const { data: agreement, loading, error } = useAsync<Agreement | null>(
+  const {
+    data: agreement,
+    loading,
+    error,
+  } = useAsync<Agreement | null>(
     async () => (tenancyId ? repo.getAgreement(tenancyId) : null),
     [tenancyId],
   );
@@ -52,20 +56,23 @@ export default function AgreementScreen() {
     if (useLibrary) {
       const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!lib.granted) {
-        Alert.alert('Permission needed', 'RentLoop needs the camera or your photos to read the agreement.');
+        Alert.alert(
+          "Permission needed",
+          "RentLoop needs the camera or your photos to read the agreement.",
+        );
         return;
       }
     }
 
     const result = useLibrary
-      ? await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7 })
+      ? await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.7 })
       : await ImagePicker.launchCameraAsync({ quality: 0.7 });
 
     if (result.canceled || !result.assets[0]) return;
 
     setBusy(true);
     try {
-      await repo.uploadAgreement(tenancyId, 'Rental agreement (photo)');
+      await repo.uploadAgreement(tenancyId, "Rental agreement (photo)");
       invalidate();
     } finally {
       setBusy(false);
@@ -78,7 +85,7 @@ export default function AgreementScreen() {
   if (!agreement) {
     return (
       <>
-        <Stack.Screen options={{ title: 'Agreement' }} />
+        <Stack.Screen options={{ title: "Agreement" }} />
         <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
           <Card>
             <Text style={type.heading}>No agreement uploaded</Text>
@@ -108,12 +115,12 @@ export default function AgreementScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Agreement' }} />
+      <Stack.Screen options={{ title: "Agreement" }} />
       <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
         <Card>
           <Text style={type.heading}>{agreement.file_name}</Text>
           <View style={styles.statusRow}>
-            {agreement.status === 'confirmed' ? (
+            {agreement.status === "confirmed" ? (
               <Pill label="All terms confirmed" tone="good" />
             ) : (
               <Pill label={`${remaining} left to confirm`} tone="warn" />
@@ -175,7 +182,7 @@ export default function AgreementScreen() {
           <Button
             label="Decide about renewal"
             variant="secondary"
-            onPress={() => router.push('/renewal')}
+            onPress={() => router.push("/renewal")}
             style={styles.renewalButton}
           />
         ) : null}
@@ -191,7 +198,7 @@ function TermCard({
   busy,
   onConfirm,
 }: {
-  term: Agreement['terms'][0];
+  term: Agreement["terms"][0];
   busy: boolean;
   onConfirm: () => void;
 }) {
@@ -214,7 +221,7 @@ function TermCard({
       {term.sourceQuote ? (
         <Pressable accessibilityRole="button" onPress={() => setShowSource((s) => !s)} hitSlop={6}>
           <Text style={styles.sourceToggle}>
-            {showSource ? 'Hide the wording' : 'Show me where this came from'}
+            {showSource ? "Hide the wording" : "Show me where this came from"}
           </Text>
         </Pressable>
       ) : null}
@@ -242,7 +249,7 @@ const styles = StyleSheet.create({
 
   emptyText: { ...type.bodyMuted, fontSize: 14, lineHeight: 21, marginTop: space.sm },
   uploadButton: { marginTop: space.lg },
-  uploadNote: { ...type.caption, fontSize: 12, marginTop: space.sm, fontStyle: 'italic' },
+  uploadNote: { ...type.caption, fontSize: 12, marginTop: space.sm, fontStyle: "italic" },
 
   statusRow: { marginTop: space.md },
   explain: { ...type.caption, fontSize: 13, lineHeight: 19, marginTop: space.md },
@@ -256,14 +263,14 @@ const styles = StyleSheet.create({
     padding: space.lg,
   },
   termConfirmed: { backgroundColor: color.surfaceSunken },
-  termTop: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
+  termTop: { flexDirection: "row", alignItems: "flex-start", gap: space.md },
   termLabel: { ...type.label },
-  termValue: { fontSize: 16, fontWeight: '600', color: color.text, marginTop: 3 },
-  termConfidence: { fontSize: 12, color: color.textFaint, fontVariant: ['tabular-nums'] },
-  sourceToggle: { fontSize: 12.5, color: color.accent, fontWeight: '600', marginTop: space.md },
+  termValue: { fontSize: 16, fontWeight: "600", color: color.text, marginTop: 3 },
+  termConfidence: { fontSize: 12, color: color.textFaint, fontVariant: ["tabular-nums"] },
+  sourceToggle: { fontSize: 12.5, color: color.accent, fontWeight: "600", marginTop: space.md },
   sourceQuote: {
     fontSize: 13,
-    fontStyle: 'italic',
+    fontStyle: "italic",
     color: color.textMuted,
     marginTop: space.sm,
     lineHeight: 19,
@@ -274,12 +281,12 @@ const styles = StyleSheet.create({
   termButton: { marginTop: space.md, height: 42 },
 
   flagged: {
-    backgroundColor: '#FCF1DC',
+    backgroundColor: "#FCF1DC",
     borderRadius: radius.md,
     padding: space.lg,
   },
-  flaggedQuote: { fontSize: 14, fontStyle: 'italic', color: '#6B4500', lineHeight: 20 },
-  flaggedReason: { fontSize: 13, color: '#8A5A00', marginTop: space.sm, lineHeight: 19 },
+  flaggedQuote: { fontSize: 14, fontStyle: "italic", color: "#6B4500", lineHeight: 20 },
+  flaggedReason: { fontSize: 13, color: "#8A5A00", marginTop: space.sm, lineHeight: 19 },
   legalNote: { ...type.caption, fontSize: 12, marginTop: space.md, lineHeight: 17 },
   renewalButton: { marginTop: space.xl },
 });

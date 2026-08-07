@@ -1,14 +1,14 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import React from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 
-import { AiDisclaimer, PhotoTile, Pill, severityTone } from '@/components/lifecycle';
-import { Card, ErrorState, LoadingState, SectionLabel, Button } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatDate } from '@/data/ledger';
-import type { AreaComparison } from '@/data/lifecycleTypes';
-import type { TenancySummary } from '@/data/types';
-import { color, radius, space, type } from '@/theme';
+import { AiDisclaimer, PhotoTile, Pill, severityTone } from "@/components/lifecycle";
+import { Card, ErrorState, LoadingState, SectionLabel, Button } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatDate } from "@/data/ledger";
+import type { AreaComparison } from "@/data/lifecycleTypes";
+import type { TenancySummary } from "@/data/types";
+import { color, radius, space, type } from "@/theme";
 
 /**
  * Move-in against move-out, area by area.
@@ -26,7 +26,7 @@ export default function CompareScreen() {
   // visit should land on the ended one rather than the active tenancy — which
   // has a move-in and nothing to compare it against.
   const { data: tenancies } = useAsync<TenancySummary[]>(() => repo.listTenancies(), []);
-  const ended = tenancies?.find((t) => t.tenancy.status === 'ended') ?? null;
+  const ended = tenancies?.find((t) => t.tenancy.status === "ended") ?? null;
   const targetId = tenancyId ?? ended?.tenancy.id ?? tenancy?.tenancy.id ?? null;
 
   const { data, loading, error } = useAsync<AreaComparison[]>(
@@ -42,13 +42,13 @@ export default function CompareScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Move-in vs move-out' }} />
+      <Stack.Screen options={{ title: "Move-in vs move-out" }} />
       <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
         <Card>
           <Text style={type.heading}>
             {changed.length === 0
-              ? 'No new damage found'
-              : `${changed.length} ${changed.length === 1 ? 'area has' : 'areas have'} changed`}
+              ? "No new damage found"
+              : `${changed.length} ${changed.length === 1 ? "area has" : "areas have"} changed`}
           </Text>
           <Text style={styles.intro}>
             Compared {data?.length ?? 0} areas photographed at both ends of the tenancy. Anything
@@ -61,7 +61,10 @@ export default function CompareScreen() {
             <SectionLabel>Changed</SectionLabel>
             <View style={styles.list}>
               {changed.map((comparison) => (
-                <ComparisonCard key={`${comparison.room}-${comparison.areaName}`} comparison={comparison} />
+                <ComparisonCard
+                  key={`${comparison.room}-${comparison.areaName}`}
+                  comparison={comparison}
+                />
               ))}
             </View>
           </>
@@ -172,14 +175,14 @@ const styles = StyleSheet.create({
     borderColor: color.border,
     padding: space.lg,
   },
-  cardTitle: { fontSize: 14.5, fontWeight: '600', color: color.text, marginBottom: space.md },
-  pair: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  side: { flex: 1, alignItems: 'center', gap: space.xs },
-  sideLabel: { fontSize: 9, fontWeight: '700', letterSpacing: 0.8, color: color.textFaint },
+  cardTitle: { fontSize: 14.5, fontWeight: "600", color: color.text, marginBottom: space.md },
+  pair: { flexDirection: "row", alignItems: "center", gap: space.md },
+  side: { flex: 1, alignItems: "center", gap: space.xs },
+  sideLabel: { fontSize: 9, fontWeight: "700", letterSpacing: 0.8, color: color.textFaint },
   sideDate: { fontSize: 11, color: color.textFaint },
   arrow: { fontSize: 18, color: color.textFaint },
-  missing: { fontSize: 12, color: color.textFaint, fontStyle: 'italic', paddingVertical: space.xl },
-  changes: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: space.md },
-  note: { fontSize: 13, fontStyle: 'italic', color: color.textMuted, marginTop: space.sm },
+  missing: { fontSize: 12, color: color.textFaint, fontStyle: "italic", paddingVertical: space.xl },
+  changes: { flexDirection: "row", flexWrap: "wrap", gap: space.xs, marginTop: space.md },
+  note: { fontSize: 13, fontStyle: "italic", color: color.textMuted, marginTop: space.sm },
   action: { marginTop: space.xxl },
 });
