@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, router } from 'expo-router';
+import React, { useState } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, router } from "expo-router";
 
-import { Pill } from '@/components/lifecycle';
-import { Button, Card, LoadingState, SectionLabel } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { daysBetween, formatDate, formatLKR, todayISO } from '@/data/ledger';
-import type { Agreement, Renewal } from '@/data/lifecycleTypes';
-import { color, radius, space, type } from '@/theme';
+import { Pill } from "@/components/lifecycle";
+import { Button, Card, LoadingState, SectionLabel } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { daysBetween, formatDate, formatLKR, todayISO } from "@/data/ledger";
+import type { Agreement, Renewal } from "@/data/lifecycleTypes";
+import { color, radius, space, type } from "@/theme";
 
 /**
  * Stay or go.
@@ -32,7 +32,7 @@ export default function RenewalScreen() {
 
   const [busy, setBusy] = useState(false);
 
-  const decide = async (intent: 'renewing' | 'leaving') => {
+  const decide = async (intent: "renewing" | "leaving") => {
     if (!tenancyId) return;
     setBusy(true);
     try {
@@ -58,11 +58,11 @@ export default function RenewalScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Renewal' }} />
+      <Stack.Screen options={{ title: "Renewal" }} />
       <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
         <Card>
           <Text style={type.label}>Your agreement ends</Text>
-          <Text style={styles.big}>{endsOn ? formatDate(endsOn) : 'Not known'}</Text>
+          <Text style={styles.big}>{endsOn ? formatDate(endsOn) : "Not known"}</Text>
 
           {noticeBy && daysToNotice !== null ? (
             <View style={[styles.deadline, daysToNotice < 45 && styles.deadlineUrgent]}>
@@ -83,28 +83,28 @@ export default function RenewalScreen() {
           )}
         </Card>
 
-        {renewal.intent !== 'undecided' ? (
+        {renewal.intent !== "undecided" ? (
           <Card style={styles.decided}>
             <Pill
-              label={renewal.intent === 'renewing' ? 'Staying on' : 'Notice given'}
-              tone={renewal.intent === 'renewing' ? 'good' : 'warn'}
+              label={renewal.intent === "renewing" ? "Staying on" : "Notice given"}
+              tone={renewal.intent === "renewing" ? "good" : "warn"}
             />
             <Text style={styles.decidedText}>
-              {renewal.intent === 'renewing'
-                ? `You told your landlord you intend to stay${renewal.decidedOn ? ` on ${formatDate(renewal.decidedOn)}` : ''}. Nothing else happens automatically — a new agreement still has to be signed.`
-                : `You gave notice${renewal.noticeGivenOn ? ` on ${formatDate(renewal.noticeGivenOn)}` : ''}. Next: book your move-out inspection so the deposit has evidence behind it.`}
+              {renewal.intent === "renewing"
+                ? `You told your landlord you intend to stay${renewal.decidedOn ? ` on ${formatDate(renewal.decidedOn)}` : ""}. Nothing else happens automatically — a new agreement still has to be signed.`
+                : `You gave notice${renewal.noticeGivenOn ? ` on ${formatDate(renewal.noticeGivenOn)}` : ""}. Next: book your move-out inspection so the deposit has evidence behind it.`}
             </Text>
-            {renewal.intent === 'leaving' ? (
+            {renewal.intent === "leaving" ? (
               <Button
                 label="Start the move-out inspection"
-                onPress={() => router.push('/inspection/move_out')}
+                onPress={() => router.push("/inspection/move_out")}
                 style={styles.decidedButton}
               />
             ) : null}
             <Button
               label="Change my mind"
               variant="ghost"
-              onPress={() => decide(renewal.intent === 'renewing' ? 'leaving' : 'renewing')}
+              onPress={() => decide(renewal.intent === "renewing" ? "leaving" : "renewing")}
               disabled={busy}
             />
           </Card>
@@ -121,7 +121,7 @@ export default function RenewalScreen() {
                 </Text>
                 <Button
                   label="I want to stay"
-                  onPress={() => decide('renewing')}
+                  onPress={() => decide("renewing")}
                   disabled={busy}
                   style={styles.optionButton}
                 />
@@ -130,13 +130,14 @@ export default function RenewalScreen() {
               <View style={styles.option}>
                 <Text style={styles.optionTitle}>Move out</Text>
                 <Text style={styles.optionBody}>
-                  Gives notice today. You would need to be out by {endsOn ? formatDate(endsOn) : 'the end of the agreement'}, and
-                  your deposit is settled against your move-out inspection.
+                  Gives notice today. You would need to be out by{" "}
+                  {endsOn ? formatDate(endsOn) : "the end of the agreement"}, and your deposit is
+                  settled against your move-out inspection.
                 </Text>
                 <Button
                   label="I want to leave"
                   variant="secondary"
-                  onPress={() => decide('leaving')}
+                  onPress={() => decide("leaving")}
                   disabled={busy}
                   style={styles.optionButton}
                 />
@@ -146,8 +147,8 @@ export default function RenewalScreen() {
         )}
 
         <Text style={styles.footnote}>
-          Recording an intention here is not the same as serving legal notice. Tell your landlord
-          in writing too — the message thread is a reasonable place, because it is timestamped.
+          Recording an intention here is not the same as serving legal notice. Tell your landlord in
+          writing too — the message thread is a reasonable place, because it is timestamped.
         </Text>
       </ScrollView>
     </>
@@ -164,9 +165,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     padding: space.md,
   },
-  deadlineUrgent: { backgroundColor: '#FCF1DC' },
-  deadlineText: { fontSize: 14, color: color.accent, fontWeight: '600', lineHeight: 20 },
-  deadlineTextUrgent: { color: '#8A5A00' },
+  deadlineUrgent: { backgroundColor: "#FCF1DC" },
+  deadlineText: { fontSize: 14, color: color.accent, fontWeight: "600", lineHeight: 20 },
+  deadlineTextUrgent: { color: "#8A5A00" },
   deadlineSub: { fontSize: 12, color: color.textMuted, marginTop: space.xs },
   unknown: { ...type.caption, fontSize: 13, marginTop: space.md, lineHeight: 19 },
 
@@ -182,7 +183,7 @@ const styles = StyleSheet.create({
     borderColor: color.border,
     padding: space.lg,
   },
-  optionTitle: { fontSize: 16, fontWeight: '600', color: color.text },
+  optionTitle: { fontSize: 16, fontWeight: "600", color: color.text },
   optionBody: { ...type.caption, fontSize: 13.5, lineHeight: 20, marginTop: space.xs },
   optionButton: { marginTop: space.lg },
 

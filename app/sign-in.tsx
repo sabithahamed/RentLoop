@@ -1,41 +1,34 @@
-import React, { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useState } from "react";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Button, Field } from '@/components/ui';
-import { useApp } from '@/data/store';
-import { DEMO_EMAIL } from '@/data/mock/seed';
-import { color, space, type } from '@/theme';
+import { Button, Field } from "@/components/ui";
+import { useApp } from "@/data/store";
+import { DEMO_EMAIL } from "@/data/mock/seed";
+import { color, space, type } from "@/theme";
 
 export default function SignInScreen() {
   const { signIn, useDemoData } = useApp();
   const insets = useSafeAreaInsets();
 
   const [email, setEmail] = useState(DEMO_EMAIL);
-  const [password, setPassword] = useState('demo1234');
+  const [password, setPassword] = useState("demo1234");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
     if (!email.trim()) {
-      setError('Enter your email');
+      setError("Enter your email");
       return;
     }
     setBusy(true);
     setError(null);
     try {
       await signIn(email, password);
-      router.replace('/');
+      router.replace("/");
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not sign in');
+      setError(e instanceof Error ? e.message : "Could not sign in");
     } finally {
       setBusy(false);
     }
@@ -45,13 +38,13 @@ export default function SignInScreen() {
     setBusy(true);
     await useDemoData();
     setBusy(false);
-    router.replace('/');
+    router.replace("/");
   };
 
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
         contentContainerStyle={[
@@ -110,7 +103,7 @@ export default function SignInScreen() {
           <Button
             label="Create an account"
             variant="ghost"
-            onPress={() => router.push('/sign-up')}
+            onPress={() => router.push("/sign-up")}
             style={styles.footerButton}
           />
         </View>
@@ -122,30 +115,30 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: color.bg },
   content: { paddingHorizontal: space.xxl },
-  brand: { alignItems: 'center', marginBottom: space.xxxl },
+  brand: { alignItems: "center", marginBottom: space.xxxl },
   mark: {
     width: 56,
     height: 56,
     borderRadius: 16,
     backgroundColor: color.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
-  markText: { color: color.textInverse, fontSize: 28, fontWeight: '700' },
+  markText: { color: color.textInverse, fontSize: 28, fontWeight: "700" },
   wordmark: { ...type.title, fontSize: 26, marginTop: space.md },
-  tagline: { marginTop: space.sm, textAlign: 'center', fontSize: 14 },
+  tagline: { marginTop: space.sm, textAlign: "center", fontSize: 14 },
 
   divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: space.md,
     marginVertical: space.xl,
   },
   dividerLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: color.borderStrong },
   dividerText: { ...type.caption, fontSize: 12 },
 
-  demoHint: { ...type.caption, fontSize: 12, marginTop: space.md, textAlign: 'center' },
+  demoHint: { ...type.caption, fontSize: 12, marginTop: space.md, textAlign: "center" },
 
-  footer: { alignItems: 'center', marginTop: space.xxxl },
+  footer: { alignItems: "center", marginTop: space.xxxl },
   footerButton: { height: 40, marginTop: space.xs },
 });

@@ -1,20 +1,20 @@
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { EmptyNote, Pill, PhotoTile } from '@/components/lifecycle';
-import { Button, Card, LoadingState, SectionLabel } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatDate, formatLKR } from '@/data/ledger';
+import { EmptyNote, Pill, PhotoTile } from "@/components/lifecycle";
+import { Button, Card, LoadingState, SectionLabel } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatDate, formatLKR } from "@/data/ledger";
 import {
   MAINTENANCE_STATUS_LABEL,
   MAINTENANCE_STATUS_TONE,
   URGENCY_LABEL,
   URGENCY_TONE,
-} from '@/data/maintenanceLabels';
-import type { MaintenanceTicket } from '@/data/lifecycleTypes';
-import { color, radius, space, type } from '@/theme';
+} from "@/data/maintenanceLabels";
+import type { MaintenanceTicket } from "@/data/lifecycleTypes";
+import { color, radius, space, type } from "@/theme";
 
 export default function TenantRepairs() {
   const { tenancy, repo } = useApp();
@@ -26,8 +26,8 @@ export default function TenantRepairs() {
     [tenancyId],
   );
 
-  const open = tickets?.filter((t) => t.status !== 'resolved' && t.status !== 'declined') ?? [];
-  const closed = tickets?.filter((t) => t.status === 'resolved' || t.status === 'declined') ?? [];
+  const open = tickets?.filter((t) => t.status !== "resolved" && t.status !== "declined") ?? [];
+  const closed = tickets?.filter((t) => t.status === "resolved" || t.status === "declined") ?? [];
 
   return (
     <ScrollView
@@ -45,7 +45,7 @@ export default function TenantRepairs() {
 
       <Button
         label="Report an issue"
-        onPress={() => router.push('/maintenance/new')}
+        onPress={() => router.push("/maintenance/new")}
         style={styles.report}
       />
 
@@ -108,13 +108,13 @@ export function TicketRow({
             label={MAINTENANCE_STATUS_LABEL[ticket.status]}
             tone={MAINTENANCE_STATUS_TONE[ticket.status]}
           />
-          {ticket.urgency !== 'normal' ? (
+          {ticket.urgency !== "normal" ? (
             <Pill label={URGENCY_LABEL[ticket.urgency]} tone={URGENCY_TONE[ticket.urgency]} />
           ) : null}
         </View>
         <Text style={styles.rowMeta}>
           Reported {formatDate(ticket.reported_on)}
-          {ticket.costCents !== null ? ` · ${formatLKR(ticket.costCents)}` : ''}
+          {ticket.costCents !== null ? ` · ${formatLKR(ticket.costCents)}` : ""}
         </Text>
       </View>
     </Pressable>
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   list: { gap: space.sm },
 
   row: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: space.md,
     backgroundColor: color.surface,
     borderRadius: radius.md,
@@ -140,8 +140,8 @@ const styles = StyleSheet.create({
   },
   rowPressed: { backgroundColor: color.surfaceSunken },
   rowBody: { flex: 1, gap: space.xs },
-  rowTitle: { fontSize: 15, fontWeight: '600', color: color.text, lineHeight: 20 },
-  rowTenancy: { fontSize: 12, color: color.accent, fontWeight: '600' },
-  rowPills: { flexDirection: 'row', gap: space.xs, flexWrap: 'wrap', marginTop: 2 },
+  rowTitle: { fontSize: 15, fontWeight: "600", color: color.text, lineHeight: 20 },
+  rowTenancy: { fontSize: 12, color: color.accent, fontWeight: "600" },
+  rowPills: { flexDirection: "row", gap: space.xs, flexWrap: "wrap", marginTop: 2 },
   rowMeta: { fontSize: 12, color: color.textFaint },
 });

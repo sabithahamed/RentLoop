@@ -11,26 +11,19 @@
  * visible without having to create it by hand.
  */
 
-import { addMonths, dueDateFor, firstOfMonth, todayISO } from '../ledger';
-import type {
-  ISODate,
-  LandlordContact,
-  Payment,
-  Property,
-  RentPeriod,
-  Tenancy,
-} from '../types';
+import { addMonths, dueDateFor, firstOfMonth, todayISO } from "../ledger";
+import type { ISODate, LandlordContact, Payment, Property, RentPeriod, Tenancy } from "../types";
 
-export const DEMO_USER_ID = 'user-demo';
-export const DEMO_EMAIL = 'tenant@rentloop.lk';
-export const DEMO_NAME = 'Sabith';
+export const DEMO_USER_ID = "user-demo";
+export const DEMO_EMAIL = "tenant@rentloop.lk";
+export const DEMO_NAME = "Sabith";
 
 /**
  * Stands in for a photographed bank slip. Rendered as a drawn facsimile by
  * `<SlipImage>` rather than a bundled asset — a real photo picked in-app is a
  * plain file URI and renders as an actual image.
  */
-export const MOCK_SLIP_URI = 'mock://slip';
+export const MOCK_SLIP_URI = "mock://slip";
 
 let counter = 0;
 const id = (prefix: string): string => `${prefix}-${++counter}`;
@@ -57,35 +50,35 @@ export function buildSeed(today: ISODate = todayISO()): SeedData {
   const startMonth = addMonths(thisMonth, -6);
 
   const property: Property = {
-    id: id('prop'),
+    id: id("prop"),
     owner_id: DEMO_USER_ID,
-    label: 'Annex, Nugegoda',
-    address_line: '14/3 Sarana Road',
-    city: 'Nugegoda',
+    label: "Annex, Nugegoda",
+    address_line: "14/3 Sarana Road",
+    city: "Nugegoda",
     created_at: now,
   };
 
   const landlord: LandlordContact = {
-    id: id('land'),
+    id: id("land"),
     owner_id: DEMO_USER_ID,
-    full_name: 'Mr. Perera',
-    phone: '077 412 8890',
+    full_name: "Mr. Perera",
+    phone: "077 412 8890",
     email: null,
     linked_user_id: null, // tenant-only mode — he has never installed the app
     created_at: now,
   };
 
   const tenancy: Tenancy = {
-    id: id('ten'),
+    id: id("ten"),
     owner_id: DEMO_USER_ID,
     property_id: property.id,
     landlord_contact_id: landlord.id,
     rent_amount_cents: RENT,
-    currency: 'LKR',
+    currency: "LKR",
     due_day_of_month: DUE_DAY,
     started_on: startMonth,
     ended_on: null,
-    status: 'active',
+    status: "active",
     created_at: now,
   };
 
@@ -94,7 +87,7 @@ export function buildSeed(today: ISODate = todayISO()): SeedData {
   for (let offset = -6; offset <= 3; offset++) {
     const month = addMonths(thisMonth, offset);
     periods.push({
-      id: id('period'),
+      id: id("period"),
       owner_id: DEMO_USER_ID,
       tenancy_id: tenancy.id,
       period_month: month,
@@ -112,13 +105,13 @@ export function buildSeed(today: ISODate = todayISO()): SeedData {
     dayOfMonth: number,
     extra: Partial<Payment> = {},
   ): Payment => ({
-    id: id('pay'),
+    id: id("pay"),
     owner_id: DEMO_USER_ID,
     rent_period_id: period.id,
     tenancy_id: tenancy.id,
     amount_cents: amount,
     paid_on: dueDateFor(period.period_month, dayOfMonth),
-    method: 'bank_transfer',
+    method: "bank_transfer",
     reference: null,
     note: null,
     receipt_path: MOCK_SLIP_URI,
@@ -128,27 +121,27 @@ export function buildSeed(today: ISODate = todayISO()): SeedData {
 
   const payments: Payment[] = [
     // -6: settled cleanly.
-    payment(at(-6), RENT, 4, { reference: 'CT 8842190' }),
+    payment(at(-6), RENT, 4, { reference: "CT 8842190" }),
 
     // -5: overpaid — rounded up to clear a small arrears balance.
     payment(at(-5), 46_000_00, 5, {
-      reference: 'CT 8901355',
-      note: 'Paid extra 1,000 to settle water bill share',
+      reference: "CT 8901355",
+      note: "Paid extra 1,000 to settle water bill share",
     }),
 
     // -4: settled by two separate transfers. The second has no slip.
-    payment(at(-4), 20_000_00, 5, { reference: 'CT 9013877' }),
+    payment(at(-4), 20_000_00, 5, { reference: "CT 9013877" }),
     payment(at(-4), 25_000_00, 18, {
       reference: null,
-      note: 'Balance after salary',
+      note: "Balance after salary",
       receipt_path: null,
     }),
 
     // -3: paid in cash, so there is no slip to photograph.
-    payment(at(-3), RENT, 6, { method: 'cash', receipt_path: null, note: 'Handed over in person' }),
+    payment(at(-3), RENT, 6, { method: "cash", receipt_path: null, note: "Handed over in person" }),
 
     // -2: part paid and past its due date — must still read `partial`.
-    payment(at(-2), 20_000_00, 7, { reference: 'CT 9241006' }),
+    payment(at(-2), 20_000_00, 7, { reference: "CT 9241006" }),
 
     // -1: nothing at all — `overdue`.
     // 0: nothing yet — `due` as the 5th approaches.
@@ -159,35 +152,35 @@ export function buildSeed(today: ISODate = todayISO()): SeedData {
   // Its ledger is not seeded — nothing in the app reads it, and inventing a
   // second full payment history would only add noise.
   const pastProperty: Property = {
-    id: id('prop'),
+    id: id("prop"),
     owner_id: DEMO_USER_ID,
-    label: 'Boarding room, Ratmalana',
-    address_line: '22 Station Road',
-    city: 'Ratmalana',
+    label: "Boarding room, Ratmalana",
+    address_line: "22 Station Road",
+    city: "Ratmalana",
     created_at: now,
   };
 
   const pastLandlord: LandlordContact = {
-    id: id('land'),
+    id: id("land"),
     owner_id: DEMO_USER_ID,
-    full_name: 'Mrs. Gunawardena',
-    phone: '071 335 2201',
+    full_name: "Mrs. Gunawardena",
+    phone: "071 335 2201",
     email: null,
     linked_user_id: null,
     created_at: now,
   };
 
   const pastTenancy: Tenancy = {
-    id: id('ten'),
+    id: id("ten"),
     owner_id: DEMO_USER_ID,
     property_id: pastProperty.id,
     landlord_contact_id: pastLandlord.id,
     rent_amount_cents: 25_000_00,
-    currency: 'LKR',
+    currency: "LKR",
     due_day_of_month: 1,
     started_on: addMonths(thisMonth, -20),
     ended_on: addMonths(thisMonth, -7),
-    status: 'ended',
+    status: "ended",
     created_at: now,
   };
 

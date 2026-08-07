@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -8,15 +8,15 @@ import {
   StyleSheet,
   Text,
   View,
-} from 'react-native';
-import { Stack, router } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
+} from "react-native";
+import { Stack, router } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 
-import { PhotoRow, Pill } from '@/components/lifecycle';
-import { Button, Field, SectionLabel } from '@/components/ui';
-import { useApp } from '@/data/store';
-import { CATEGORIES, CATEGORY_LABEL } from '@/data/maintenanceLabels';
-import { color, radius, space, type } from '@/theme';
+import { PhotoRow, Pill } from "@/components/lifecycle";
+import { Button, Field, SectionLabel } from "@/components/ui";
+import { useApp } from "@/data/store";
+import { CATEGORIES, CATEGORY_LABEL } from "@/data/maintenanceLabels";
+import { color, radius, space, type } from "@/theme";
 
 /**
  * Reporting an issue.
@@ -29,8 +29,8 @@ import { color, radius, space, type } from '@/theme';
 export default function NewTicketScreen() {
   const { tenancy, repo, role, invalidate } = useApp();
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [photoUris, setPhotoUris] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,11 +38,11 @@ export default function NewTicketScreen() {
   const addPhoto = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Permission needed', 'RentLoop needs access to your photos.');
+      Alert.alert("Permission needed", "RentLoop needs access to your photos.");
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ["images"],
       quality: 0.7,
     });
     if (!result.canceled && result.assets[0]) {
@@ -53,7 +53,7 @@ export default function NewTicketScreen() {
   const submit = async () => {
     if (!tenancy) return;
     if (!title.trim()) {
-      setError('Give the issue a short title');
+      setError("Give the issue a short title");
       return;
     }
     setBusy(true);
@@ -69,7 +69,7 @@ export default function NewTicketScreen() {
       invalidate();
       router.replace(`/maintenance/${ticket.id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save');
+      setError(e instanceof Error ? e.message : "Could not save");
     } finally {
       setBusy(false);
     }
@@ -77,10 +77,10 @@ export default function NewTicketScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Report an issue', presentation: 'modal' }} />
+      <Stack.Screen options={{ title: "Report an issue", presentation: "modal" }} />
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={60}
       >
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -113,7 +113,7 @@ export default function NewTicketScreen() {
             style={({ pressed }) => [styles.addPhoto, pressed && styles.addPhotoPressed]}
           >
             <Text style={styles.addPhotoText}>
-              {photoUris.length === 0 ? 'Add a photo' : 'Add another'}
+              {photoUris.length === 0 ? "Add a photo" : "Add another"}
             </Text>
           </Pressable>
 
@@ -130,7 +130,7 @@ export default function NewTicketScreen() {
           <Button label="Report it" onPress={submit} loading={busy} style={styles.submit} />
 
           <Text style={styles.categories}>
-            Categories: {CATEGORIES.map((c) => CATEGORY_LABEL[c]).join(' · ')}
+            Categories: {CATEGORIES.map((c) => CATEGORY_LABEL[c]).join(" · ")}
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -145,29 +145,29 @@ const styles = StyleSheet.create({
 
   addPhoto: {
     borderWidth: 1,
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
     borderColor: color.borderStrong,
     borderRadius: radius.md,
     padding: space.lg,
-    alignItems: 'center',
+    alignItems: "center",
     backgroundColor: color.surface,
     marginTop: space.sm,
   },
   addPhotoPressed: { backgroundColor: color.surfaceSunken },
-  addPhotoText: { fontSize: 15, fontWeight: '600', color: color.accent },
+  addPhotoText: { fontSize: 15, fontWeight: "600", color: color.accent },
 
   aiHint: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: space.md,
-    alignItems: 'flex-start',
-    backgroundColor: '#F4F1FB',
+    alignItems: "flex-start",
+    backgroundColor: "#F4F1FB",
     borderRadius: radius.md,
     padding: space.lg,
     marginTop: space.xl,
   },
-  aiHintText: { flex: 1, fontSize: 13, color: '#5B5480', lineHeight: 19 },
+  aiHintText: { flex: 1, fontSize: 13, color: "#5B5480", lineHeight: 19 },
 
   error: { ...type.caption, color: color.danger, marginTop: space.md },
   submit: { marginTop: space.xl },
-  categories: { ...type.caption, fontSize: 11.5, marginTop: space.lg, textAlign: 'center' },
+  categories: { ...type.caption, fontSize: 11.5, marginTop: space.lg, textAlign: "center" },
 });

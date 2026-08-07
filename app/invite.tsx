@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, router } from 'expo-router';
+import React, { useState } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, router } from "expo-router";
 
-import { Pill } from '@/components/lifecycle';
-import { Button, Card, LoadingState, SectionLabel } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatDate } from '@/data/ledger';
-import type { Invitation } from '@/data/lifecycleTypes';
-import { color, radius, space, type } from '@/theme';
+import { Pill } from "@/components/lifecycle";
+import { Button, Card, LoadingState, SectionLabel } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatDate } from "@/data/ledger";
+import type { Invitation } from "@/data/lifecycleTypes";
+import { color, radius, space, type } from "@/theme";
 
 /**
  * Tenant-only → connected mode.
@@ -57,24 +57,24 @@ export default function InviteScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Invite your landlord' }} />
+      <Stack.Screen options={{ title: "Invite your landlord" }} />
       <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
-        {invitation.status === 'accepted' ? (
+        {invitation.status === "accepted" ? (
           <Card>
             <Pill label="CONNECTED" tone="good" />
             <Text style={styles.acceptedTitle}>{name} is on RentLoop</Text>
             <Text style={styles.body}>
-              You now share one record. Repairs you report appear on their side immediately, and
-              the rent ledger is the same ledger for both of you — there is no longer a version of
+              You now share one record. Repairs you report appear on their side immediately, and the
+              rent ledger is the same ledger for both of you — there is no longer a version of
               events each of you keeps separately.
             </Text>
             <Text style={styles.meta}>
-              Connected {invitation.acceptedOn ? formatDate(invitation.acceptedOn) : 'today'}.
+              Connected {invitation.acceptedOn ? formatDate(invitation.acceptedOn) : "today"}.
             </Text>
             <Button
               label="Back to the property"
               variant="secondary"
-              onPress={() => router.replace('/tenant/property')}
+              onPress={() => router.replace("/tenant/property")}
               style={styles.action}
             />
           </Card>
@@ -103,14 +103,14 @@ export default function InviteScreen() {
               <Line>Anything you have not recorded against this tenancy</Line>
             </Card>
 
-            {invitation.status === 'sent' ? (
+            {invitation.status === "sent" ? (
               <Card style={styles.codeCard}>
                 <Pill label="INVITE SENT" tone="warn" />
                 <Text style={styles.codeLabel}>Their code</Text>
                 <Text style={styles.code}>{invitation.code}</Text>
                 <Text style={styles.codeHelp}>
-                  {name} enters this in RentLoop after installing it. Sent{' '}
-                  {invitation.sentOn ? formatDate(invitation.sentOn) : 'today'}.
+                  {name} enters this in RentLoop after installing it. Sent{" "}
+                  {invitation.sentOn ? formatDate(invitation.sentOn) : "today"}.
                 </Text>
                 <Button
                   label="Simulate them accepting"
@@ -142,7 +142,7 @@ export default function InviteScreen() {
 function Line({ children, good = false }: { children: React.ReactNode; good?: boolean }) {
   return (
     <View style={styles.line}>
-      <Text style={[styles.bullet, good && { color: '#1B5E3F' }]}>{good ? '✓' : '·'}</Text>
+      <Text style={[styles.bullet, good && { color: "#1B5E3F" }]}>{good ? "✓" : "·"}</Text>
       <Text style={styles.lineText}>{children}</Text>
     </View>
   );
@@ -156,22 +156,22 @@ const styles = StyleSheet.create({
   acceptedTitle: { ...type.title, fontSize: 19, marginTop: space.md },
 
   listCard: { paddingVertical: space.md },
-  line: { flexDirection: 'row', gap: space.md, paddingVertical: space.sm },
+  line: { flexDirection: "row", gap: space.md, paddingVertical: space.sm },
   bullet: { fontSize: 14, color: color.textFaint, width: 14 },
   lineText: { flex: 1, fontSize: 14, color: color.text, lineHeight: 20 },
 
-  codeCard: { marginTop: space.xl, alignItems: 'flex-start' },
+  codeCard: { marginTop: space.xl, alignItems: "flex-start" },
   codeLabel: { ...type.label, marginTop: space.lg },
   code: {
     fontSize: 34,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 8,
     color: color.accent,
     marginTop: space.xs,
-    fontVariant: ['tabular-nums'],
+    fontVariant: ["tabular-nums"],
   },
   codeHelp: { ...type.caption, fontSize: 13, marginTop: space.sm, lineHeight: 19 },
-  demoNote: { ...type.caption, fontSize: 11.5, marginTop: space.sm, fontStyle: 'italic' },
+  demoNote: { ...type.caption, fontSize: 11.5, marginTop: space.sm, fontStyle: "italic" },
 
-  action: { marginTop: space.lg, alignSelf: 'stretch' },
+  action: { marginTop: space.lg, alignSelf: "stretch" },
 });

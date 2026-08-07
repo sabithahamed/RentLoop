@@ -1,14 +1,14 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Redirect, router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Redirect, router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { NavRow, Pill } from '@/components/lifecycle';
-import { Button, Card, LoadingState, SectionLabel } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatDate, formatLKR, ordinal } from '@/data/ledger';
-import type { LifecycleOverview } from '@/data/lifecycleTypes';
-import { color, space, type } from '@/theme';
+import { NavRow, Pill } from "@/components/lifecycle";
+import { Button, Card, LoadingState, SectionLabel } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatDate, formatLKR, ordinal } from "@/data/ledger";
+import type { LifecycleOverview } from "@/data/lifecycleTypes";
+import { color, space, type } from "@/theme";
 
 /** The property hub: the documents and evidence attached to where you live. */
 export default function TenantProperty() {
@@ -36,14 +36,17 @@ export default function TenantProperty() {
     >
       <Text style={type.title}>{property.label}</Text>
       <Text style={[type.caption, styles.address]}>
-        {[property.address_line, property.city].filter(Boolean).join(', ') || 'No address saved'}
+        {[property.address_line, property.city].filter(Boolean).join(", ") || "No address saved"}
       </Text>
 
       <Card style={styles.facts}>
-        <Row label="Rent" value={`${formatLKR(t.rent_amount_cents)} · due on the ${ordinal(t.due_day_of_month)}`} />
+        <Row
+          label="Rent"
+          value={`${formatLKR(t.rent_amount_cents)} · due on the ${ordinal(t.due_day_of_month)}`}
+        />
         <Row label="Tenancy started" value={formatDate(t.started_on)} />
         <Row label="Landlord" value={landlord.full_name} />
-        <Row label="Contact" value={landlord.phone ?? 'No number saved'} last />
+        <Row label="Contact" value={landlord.phone ?? "No number saved"} last />
       </Card>
 
       {landlord.linked_user_id === null ? (
@@ -57,7 +60,7 @@ export default function TenantProperty() {
           <Button
             label={`Invite ${landlord.full_name}`}
             variant="secondary"
-            onPress={() => router.push('/invite')}
+            onPress={() => router.push("/invite")}
             style={styles.connectButton}
           />
         </Card>
@@ -76,36 +79,34 @@ export default function TenantProperty() {
         <NavRow
           title="Rental agreement"
           subtitle={
-            overview?.agreementStatus === 'confirmed'
-              ? 'Confirmed — reminders are set from it'
-              : overview?.agreementStatus === 'needs_review'
-                ? 'Terms need your confirmation'
-                : 'Not uploaded'
+            overview?.agreementStatus === "confirmed"
+              ? "Confirmed — reminders are set from it"
+              : overview?.agreementStatus === "needs_review"
+                ? "Terms need your confirmation"
+                : "Not uploaded"
           }
-          tone={overview?.agreementStatus === 'needs_review' ? 'attention' : 'default'}
-          onPress={() => router.push('/agreement')}
+          tone={overview?.agreementStatus === "needs_review" ? "attention" : "default"}
+          onPress={() => router.push("/agreement")}
         />
         <NavRow
           title="Move-in inspection"
           subtitle={
-            overview?.moveInStatus === 'complete' ? 'Complete' : 'Incomplete — worth finishing'
+            overview?.moveInStatus === "complete" ? "Complete" : "Incomplete — worth finishing"
           }
-          tone={overview?.moveInStatus === 'complete' ? 'default' : 'attention'}
-          onPress={() => router.push('/inspection/move_in')}
+          tone={overview?.moveInStatus === "complete" ? "default" : "attention"}
+          onPress={() => router.push("/inspection/move_in")}
         />
         <NavRow
           title="Move-out inspection"
           subtitle={
-            overview?.moveOutStatus === 'complete'
-              ? 'Complete'
-              : 'Start this when you are leaving'
+            overview?.moveOutStatus === "complete" ? "Complete" : "Start this when you are leaving"
           }
-          onPress={() => router.push('/inspection/move_out')}
+          onPress={() => router.push("/inspection/move_out")}
         />
         <NavRow
           title="Renewal and notice"
           subtitle="Decide whether you are staying on"
-          onPress={() => router.push('/renewal')}
+          onPress={() => router.push("/renewal")}
         />
       </View>
 
@@ -132,14 +133,14 @@ const styles = StyleSheet.create({
   address: { marginTop: 2, marginBottom: space.lg },
   facts: { paddingVertical: 0 },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     gap: space.lg,
     paddingVertical: space.md,
   },
   rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: color.border },
-  rowValue: { flex: 1, textAlign: 'right', fontSize: 14 },
+  rowValue: { flex: 1, textAlign: "right", fontSize: 14 },
 
   connect: { marginTop: space.lg },
   connectText: { ...type.caption, fontSize: 13.5, lineHeight: 20, marginTop: space.md },

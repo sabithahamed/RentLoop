@@ -1,21 +1,21 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { NavRow, Pill } from '@/components/lifecycle';
-import { Button, Card, SectionLabel } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatDate } from '@/data/ledger';
-import type { TenancySummary } from '@/data/types';
-import { color, space, type } from '@/theme';
+import { NavRow, Pill } from "@/components/lifecycle";
+import { Button, Card, SectionLabel } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatDate } from "@/data/ledger";
+import type { TenancySummary } from "@/data/types";
+import { color, space, type } from "@/theme";
 
 export default function TenantMore() {
   const { session, repo, role, setRole, signOut, useDemoData } = useApp();
   const insets = useSafeAreaInsets();
 
   const { data: tenancies } = useAsync<TenancySummary[]>(() => repo.listTenancies(), []);
-  const past = tenancies?.filter((t) => t.tenancy.status === 'ended') ?? [];
+  const past = tenancies?.filter((t) => t.tenancy.status === "ended") ?? [];
 
   return (
     <ScrollView
@@ -37,12 +37,12 @@ export default function TenantMore() {
         <NavRow
           title="Reminders"
           subtitle="Everything the app thinks needs your attention"
-          onPress={() => router.push('/reminders')}
+          onPress={() => router.push("/reminders")}
         />
         <NavRow
           title="Renewal and notice"
           subtitle="Stay on, or give notice"
-          onPress={() => router.push('/renewal')}
+          onPress={() => router.push("/renewal")}
         />
       </View>
 
@@ -51,12 +51,12 @@ export default function TenantMore() {
         <NavRow
           title="Find a place"
           subtitle="Listings that show the landlord's track record"
-          onPress={() => router.push('/discover')}
+          onPress={() => router.push("/discover")}
         />
         <NavRow
           title="Reviews"
           subtitle="Written after a tenancy ends, by both sides"
-          onPress={() => router.push('/reviews')}
+          onPress={() => router.push("/reviews")}
         />
       </View>
 
@@ -80,7 +80,7 @@ export default function TenantMore() {
       {/* Prototype scaffolding — clearly separated from the real app. */}
       <SectionLabel>Prototype controls</SectionLabel>
       <Card>
-        <Text style={type.heading}>Viewing as {role === 'tenant' ? 'tenant' : 'landlord'}</Text>
+        <Text style={type.heading}>Viewing as {role === "tenant" ? "tenant" : "landlord"}</Text>
         <Text style={styles.roleNote}>
           RentLoop is double-sided. Switch to see the landlord side — a separate persona with its
           own three properties, not {`this account's`} landlord.
@@ -92,22 +92,18 @@ export default function TenantMore() {
           label="Switch to the landlord view"
           variant="secondary"
           onPress={() => {
-            setRole('landlord');
-            router.replace('/landlord/portfolio');
+            setRole("landlord");
+            router.replace("/landlord/portfolio");
           }}
           style={styles.roleButton}
         />
-        <Button
-          label="Reset the demo data"
-          variant="ghost"
-          onPress={() => void useDemoData()}
-        />
+        <Button label="Reset the demo data" variant="ghost" onPress={() => void useDemoData()} />
       </Card>
 
       <Button
         label="Sign out"
         variant="danger"
-        onPress={() => signOut().then(() => router.replace('/sign-in'))}
+        onPress={() => signOut().then(() => router.replace("/sign-in"))}
         style={styles.signOut}
       />
     </ScrollView>

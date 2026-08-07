@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -7,17 +7,17 @@ import {
   StyleSheet,
   Text,
   View,
-} from 'react-native';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+} from "react-native";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 
-import { Pill } from '@/components/lifecycle';
-import { Button, Card, Field, LoadingState } from '@/components/ui';
-import { useApp, useAsync } from '@/data/store';
-import { formatDate } from '@/data/ledger';
-import type { TenancySummary } from '@/data/types';
-import { color, radius, space, type } from '@/theme';
+import { Pill } from "@/components/lifecycle";
+import { Button, Card, Field, LoadingState } from "@/components/ui";
+import { useApp, useAsync } from "@/data/store";
+import { formatDate } from "@/data/ledger";
+import type { TenancySummary } from "@/data/types";
+import { color, radius, space, type } from "@/theme";
 
-const RATING_WORDS = ['', 'Bad', 'Poor', 'Fair', 'Good', 'Excellent'];
+const RATING_WORDS = ["", "Bad", "Poor", "Fair", "Good", "Excellent"];
 
 /**
  * Writing a review, which is only possible after a tenancy RentLoop saw end.
@@ -30,29 +30,26 @@ export default function NewReviewScreen() {
   const { tenancyId } = useLocalSearchParams<{ tenancyId?: string }>();
   const { repo, role, invalidate } = useApp();
 
-  const { data: tenancies, loading } = useAsync<TenancySummary[]>(
-    () => repo.listTenancies(),
-    [],
-  );
+  const { data: tenancies, loading } = useAsync<TenancySummary[]>(() => repo.listTenancies(), []);
 
-  const ended = tenancies?.filter((t) => t.tenancy.status === 'ended') ?? [];
+  const ended = tenancies?.filter((t) => t.tenancy.status === "ended") ?? [];
   const target = tenancyId
     ? (ended.find((t) => t.tenancy.id === tenancyId) ?? null)
     : (ended[0] ?? null);
 
   const [rating, setRating] = useState(0);
-  const [body, setBody] = useState('');
+  const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
     if (!target) return;
     if (rating === 0) {
-      setError('Pick a rating');
+      setError("Pick a rating");
       return;
     }
     if (body.trim().length < 20) {
-      setError('Write a couple of sentences — a bare rating helps nobody');
+      setError("Write a couple of sentences — a bare rating helps nobody");
       return;
     }
     setBusy(true);
@@ -60,14 +57,14 @@ export default function NewReviewScreen() {
     try {
       await repo.leaveReview({
         tenancyId: target.tenancy.id,
-        direction: role === 'tenant' ? 'tenant_to_landlord' : 'landlord_to_tenant',
+        direction: role === "tenant" ? "tenant_to_landlord" : "landlord_to_tenant",
         rating,
         body: body.trim(),
       });
       invalidate();
-      router.replace('/reviews');
+      router.replace("/reviews");
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save your review');
+      setError(e instanceof Error ? e.message : "Could not save your review");
     } finally {
       setBusy(false);
     }
@@ -78,13 +75,13 @@ export default function NewReviewScreen() {
   if (!target) {
     return (
       <>
-        <Stack.Screen options={{ title: 'Write a review' }} />
+        <Stack.Screen options={{ title: "Write a review" }} />
         <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
           <Card>
             <Text style={type.heading}>Nothing to review yet</Text>
             <Text style={styles.emptyText}>
-              Reviews open when a tenancy ends. That constraint is the point — it is what stops
-              this becoming a place anyone can complain about anyone.
+              Reviews open when a tenancy ends. That constraint is the point — it is what stops this
+              becoming a place anyone can complain about anyone.
             </Text>
           </Card>
         </ScrollView>
@@ -94,10 +91,10 @@ export default function NewReviewScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Write a review' }} />
+      <Stack.Screen options={{ title: "Write a review" }} />
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={90}
       >
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -105,14 +102,14 @@ export default function NewReviewScreen() {
             <Pill label="VERIFIED TENANCY" tone="good" />
             <Text style={styles.subject}>{target.property.label}</Text>
             <Text style={type.caption}>
-              {role === 'tenant' ? target.landlord.full_name : 'Your tenant'} ·{' '}
-              {formatDate(target.tenancy.started_on)} to{' '}
-              {target.tenancy.ended_on ? formatDate(target.tenancy.ended_on) : 'now'}
+              {role === "tenant" ? target.landlord.full_name : "Your tenant"} ·{" "}
+              {formatDate(target.tenancy.started_on)} to{" "}
+              {target.tenancy.ended_on ? formatDate(target.tenancy.ended_on) : "now"}
             </Text>
           </Card>
 
           <Text style={styles.question}>
-            How was {role === 'tenant' ? 'renting from them' : 'renting to them'}?
+            How was {role === "tenant" ? "renting from them" : "renting to them"}?
           </Text>
 
           <View style={styles.stars}>
@@ -126,12 +123,12 @@ export default function NewReviewScreen() {
                 hitSlop={6}
               >
                 <Text style={[styles.star, value <= rating && styles.starOn]}>
-                  {value <= rating ? '★' : '☆'}
+                  {value <= rating ? "★" : "☆"}
                 </Text>
               </Pressable>
             ))}
           </View>
-          <Text style={styles.ratingWord}>{rating > 0 ? RATING_WORDS[rating] : ' '}</Text>
+          <Text style={styles.ratingWord}>{rating > 0 ? RATING_WORDS[rating] : " "}</Text>
 
           <Field
             label="What should the next person know?"
@@ -139,9 +136,9 @@ export default function NewReviewScreen() {
             onChangeText={setBody}
             multiline
             placeholder={
-              role === 'tenant'
-                ? 'Were repairs dealt with? Was the deposit returned fairly? Were they easy to reach?'
-                : 'Was rent paid on time? Was the property looked after? Were issues raised early?'
+              role === "tenant"
+                ? "Were repairs dealt with? Was the deposit returned fairly? Were they easy to reach?"
+                : "Was rent paid on time? Was the property looked after? Were issues raised early?"
             }
             error={error}
             style={styles.field}
@@ -164,19 +161,19 @@ const styles = StyleSheet.create({
   content: { padding: space.xl, paddingBottom: space.xxxl * 2 },
   emptyText: { ...type.bodyMuted, fontSize: 14, lineHeight: 21, marginTop: space.sm },
   subject: { ...type.title, fontSize: 18, marginTop: space.md },
-  question: { ...type.heading, fontSize: 16, marginTop: space.xxl, textAlign: 'center' },
+  question: { ...type.heading, fontSize: 16, marginTop: space.xxl, textAlign: "center" },
   stars: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     gap: space.sm,
     marginTop: space.lg,
   },
   star: { fontSize: 40, color: color.borderStrong },
-  starOn: { color: '#B8860B' },
+  starOn: { color: "#B8860B" },
   ratingWord: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: color.textMuted,
     marginTop: space.sm,
     marginBottom: space.xl,

@@ -1,13 +1,13 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Card, LoadingState } from '@/components/ui';
-import { EmptyNote } from '@/components/lifecycle';
-import { useApp, useAsync } from '@/data/store';
-import type { Thread } from '@/data/lifecycleTypes';
-import { color, space, type } from '@/theme';
-import { ThreadRow } from '../thread/index';
+import { Card, LoadingState } from "@/components/ui";
+import { EmptyNote } from "@/components/lifecycle";
+import { useApp, useAsync } from "@/data/store";
+import type { Thread } from "@/data/lifecycleTypes";
+import { color, space, type } from "@/theme";
+import { ThreadRow } from "../thread/index";
 
 export default function LandlordInbox() {
   const { tenancy, repo } = useApp();

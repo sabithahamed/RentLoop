@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 'react-native';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import React, { useState } from "react";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from "react-native";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 
-import { Button, Field, SectionLabel, SegmentedControl } from '@/components/ui';
-import { useApp } from '@/data/store';
-import type { ThreadSubjectType } from '@/data/lifecycleTypes';
-import { color, space, type } from '@/theme';
+import { Button, Field, SectionLabel, SegmentedControl } from "@/components/ui";
+import { useApp } from "@/data/store";
+import type { ThreadSubjectType } from "@/data/lifecycleTypes";
+import { color, space, type } from "@/theme";
 
 const ABOUT_OPTIONS: { value: ThreadSubjectType; label: string }[] = [
-  { value: 'general', label: 'General' },
-  { value: 'payment', label: 'Rent' },
-  { value: 'maintenance', label: 'Repair' },
+  { value: "general", label: "General" },
+  { value: "payment", label: "Rent" },
+  { value: "maintenance", label: "Repair" },
 ];
 
 /**
@@ -22,25 +22,28 @@ const ABOUT_OPTIONS: { value: ThreadSubjectType; label: string }[] = [
  * WhatsApp, which buys nobody anything.
  */
 export default function NewThreadScreen() {
-  const { about: aboutParam, id: aboutId } = useLocalSearchParams<{ about?: string; id?: string }>();
+  const { about: aboutParam, id: aboutId } = useLocalSearchParams<{
+    about?: string;
+    id?: string;
+  }>();
   const { tenancy, repo, role, invalidate } = useApp();
 
-  const [subject, setSubject] = useState('');
+  const [subject, setSubject] = useState("");
   const [about, setAbout] = useState<ThreadSubjectType>(
-    aboutParam === 'payment' || aboutParam === 'maintenance' ? aboutParam : 'general',
+    aboutParam === "payment" || aboutParam === "maintenance" ? aboutParam : "general",
   );
-  const [body, setBody] = useState('');
+  const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
     if (!tenancy) return;
     if (!subject.trim()) {
-      setError('Give it a subject so it can be found later');
+      setError("Give it a subject so it can be found later");
       return;
     }
     if (!body.trim()) {
-      setError('Write your message');
+      setError("Write your message");
       return;
     }
     setBusy(true);
@@ -56,7 +59,7 @@ export default function NewThreadScreen() {
       invalidate();
       router.replace(`/thread/${thread.id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not start the conversation');
+      setError(e instanceof Error ? e.message : "Could not start the conversation");
     } finally {
       setBusy(false);
     }
@@ -64,10 +67,10 @@ export default function NewThreadScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'New conversation', presentation: 'modal' }} />
+      <Stack.Screen options={{ title: "New conversation", presentation: "modal" }} />
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={60}
       >
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -89,11 +92,11 @@ export default function NewThreadScreen() {
             value={subject}
             onChangeText={setSubject}
             placeholder={
-              about === 'payment'
-                ? 'Paying late this month'
-                : about === 'maintenance'
-                  ? 'Kitchen tap'
-                  : 'Water bill share'
+              about === "payment"
+                ? "Paying late this month"
+                : about === "maintenance"
+                  ? "Kitchen tap"
+                  : "Water bill share"
             }
           />
 
@@ -111,7 +114,7 @@ export default function NewThreadScreen() {
           <Text style={styles.note}>
             {tenancy?.landlord.linked_user_id
               ? `${tenancy.landlord.full_name} sees this in their RentLoop inbox.`
-              : `${tenancy?.landlord.full_name ?? 'Your landlord'} is not on RentLoop yet, so this is recorded on your side only. It still timestamps what you said and when — which is worth having.`}
+              : `${tenancy?.landlord.full_name ?? "Your landlord"} is not on RentLoop yet, so this is recorded on your side only. It still timestamps what you said and when — which is worth having.`}
           </Text>
 
           <Button label="Send" onPress={submit} loading={busy} style={styles.submit} />

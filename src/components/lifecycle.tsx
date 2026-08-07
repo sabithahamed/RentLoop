@@ -6,7 +6,7 @@
  * structural rather than something each screen has to remember.
  */
 
-import React from 'react';
+import React from "react";
 import {
   Image,
   Pressable,
@@ -15,11 +15,11 @@ import {
   View,
   type StyleProp,
   type ViewStyle,
-} from 'react-native';
+} from "react-native";
 
-import { color, radius, space, type } from '../theme';
-import { MOCK_PHOTO } from '../data/mock/lifecycleSeed';
-import type { AiSuggestion, DefectSeverity, Role } from '../data/lifecycleTypes';
+import { color, radius, space, type } from "../theme";
+import { MOCK_PHOTO } from "../data/mock/lifecycleSeed";
+import type { AiSuggestion, DefectSeverity, Role } from "../data/lifecycleTypes";
 
 // ---------------------------------------------------------------------------
 // Assistant
@@ -53,7 +53,7 @@ export function AiCard({
           <Text style={styles.aiBadgeText}>ASSISTANT</Text>
         </View>
         <Text style={styles.aiConfidence}>
-          {low ? 'not confident · ' : ''}
+          {low ? "not confident · " : ""}
           {Math.round(suggestion.confidence * 100)}%
         </Text>
       </View>
@@ -63,7 +63,7 @@ export function AiCard({
 
       {settled ? (
         <Text style={styles.aiSettled}>
-          {suggestion.acceptedAt ? 'You accepted this' : 'You dismissed this'}
+          {suggestion.acceptedAt ? "You accepted this" : "You dismissed this"}
         </Text>
       ) : onAccept || onDismiss ? (
         <View style={styles.aiActions}>
@@ -112,7 +112,7 @@ export function PhotoTile({
   style?: StyleProp<ViewStyle>;
 }) {
   const isMock = uri.startsWith(MOCK_PHOTO);
-  const label = isMock ? decodeURIComponent(uri.slice(MOCK_PHOTO.length + 1)) : '';
+  const label = isMock ? decodeURIComponent(uri.slice(MOCK_PHOTO.length + 1)) : "";
 
   return (
     <View style={[{ width: size, height: size }, styles.tile, style]}>
@@ -168,7 +168,7 @@ export function Timeline({
               {item.note ? <Text style={styles.timelineNote}>{item.note}</Text> : null}
               <Text style={styles.timelineMeta}>
                 {item.meta}
-                {item.by ? ` · ${actorName(item.by, viewerRole)}` : ''}
+                {item.by ? ` · ${actorName(item.by, viewerRole)}` : ""}
               </Text>
             </View>
           </View>
@@ -180,8 +180,8 @@ export function Timeline({
 
 /** Who did a thing, from the reader's point of view. */
 export function actorName(actor: Role, viewer: Role): string {
-  if (actor === viewer) return 'You';
-  return actor === 'tenant' ? 'Tenant' : 'Landlord';
+  if (actor === viewer) return "You";
+  return actor === "tenant" ? "Tenant" : "Landlord";
 }
 
 // ---------------------------------------------------------------------------
@@ -194,13 +194,13 @@ export function NavRow({
   subtitle,
   badge,
   onPress,
-  tone = 'default',
+  tone = "default",
 }: {
   title: string;
   subtitle?: string;
   badge?: string | null;
   onPress: () => void;
-  tone?: 'default' | 'attention';
+  tone?: "default" | "attention";
 }) {
   return (
     <Pressable
@@ -211,13 +211,13 @@ export function NavRow({
       <View style={styles.navBody}>
         <Text style={styles.navTitle}>{title}</Text>
         {subtitle ? (
-          <Text style={[styles.navSub, tone === 'attention' && { color: color.danger }]}>
+          <Text style={[styles.navSub, tone === "attention" && { color: color.danger }]}>
             {subtitle}
           </Text>
         ) : null}
       </View>
       {badge ? (
-        <View style={[styles.navBadge, tone === 'attention' && { backgroundColor: color.danger }]}>
+        <View style={[styles.navBadge, tone === "attention" && { backgroundColor: color.danger }]}>
           <Text style={styles.navBadgeText}>{badge}</Text>
         </View>
       ) : null}
@@ -228,10 +228,10 @@ export function NavRow({
 
 export function Pill({
   label,
-  tone = 'neutral',
+  tone = "neutral",
 }: {
   label: string;
-  tone?: 'neutral' | 'good' | 'warn' | 'bad' | 'info';
+  tone?: "neutral" | "good" | "warn" | "bad" | "info";
 }) {
   return (
     <View style={[styles.pill, PILL_TONE[tone].box]}>
@@ -241,17 +241,17 @@ export function Pill({
 }
 
 const PILL_TONE = {
-  neutral: { box: { backgroundColor: '#EFF1F4' }, text: { color: '#5D6672' } },
-  good: { box: { backgroundColor: '#E6F2EB' }, text: { color: '#1B5E3F' } },
-  warn: { box: { backgroundColor: '#FCF1DC' }, text: { color: '#8A5A00' } },
-  bad: { box: { backgroundColor: '#FBEAEA' }, text: { color: '#9B1C1C' } },
-  info: { box: { backgroundColor: '#E9EDF7' }, text: { color: '#25408F' } },
+  neutral: { box: { backgroundColor: "#EFF1F4" }, text: { color: "#5D6672" } },
+  good: { box: { backgroundColor: "#E6F2EB" }, text: { color: "#1B5E3F" } },
+  warn: { box: { backgroundColor: "#FCF1DC" }, text: { color: "#8A5A00" } },
+  bad: { box: { backgroundColor: "#FBEAEA" }, text: { color: "#9B1C1C" } },
+  info: { box: { backgroundColor: "#E9EDF7" }, text: { color: "#25408F" } },
 } as const;
 
-export const severityTone: Record<DefectSeverity, 'warn' | 'bad'> = {
-  minor: 'warn',
-  moderate: 'warn',
-  severe: 'bad',
+export const severityTone: Record<DefectSeverity, "warn" | "bad"> = {
+  minor: "warn",
+  moderate: "warn",
+  severe: "bad",
 };
 
 export function Stars({ rating, size = 15 }: { rating: number; size?: number }) {
@@ -261,19 +261,19 @@ export function Stars({ rating, size = 15 }: { rating: number; size?: number }) 
   return (
     <Text
       accessibilityLabel={`${rating} out of 5`}
-      style={{ fontSize: size, color: '#B8860B', letterSpacing: 1 }}
+      style={{ fontSize: size, color: "#B8860B", letterSpacing: 1 }}
     >
-      {'★'.repeat(filled)}
-      <Text style={{ color: color.borderStrong }}>{'☆'.repeat(5 - filled)}</Text>
+      {"★".repeat(filled)}
+      <Text style={{ color: color.borderStrong }}>{"☆".repeat(5 - filled)}</Text>
     </Text>
   );
 }
 
 /** Big number + caption, used across both dashboards. */
-export function Stat({ value, label, tone }: { value: string; label: string; tone?: 'bad' }) {
+export function Stat({ value, label, tone }: { value: string; label: string; tone?: "bad" }) {
   return (
     <View style={styles.stat}>
-      <Text style={[styles.statValue, tone === 'bad' && { color: color.danger }]}>{value}</Text>
+      <Text style={[styles.statValue, tone === "bad" && { color: color.danger }]}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
@@ -287,49 +287,49 @@ export function EmptyNote({ children }: { children: React.ReactNode }) {
 
 const styles = StyleSheet.create({
   ai: {
-    backgroundColor: '#F4F1FB',
+    backgroundColor: "#F4F1FB",
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#DDD5F2',
+    borderColor: "#DDD5F2",
     padding: space.lg,
   },
   aiHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: space.sm,
   },
   aiBadge: {
-    backgroundColor: '#5B4B9E',
+    backgroundColor: "#5B4B9E",
     borderRadius: radius.pill,
     paddingHorizontal: space.sm,
     paddingVertical: 2,
   },
-  aiBadgeText: { fontSize: 9, fontWeight: '700', letterSpacing: 0.8, color: '#FFFFFF' },
-  aiConfidence: { fontSize: 11, color: '#6B5FA8', fontVariant: ['tabular-nums'] },
-  aiHeadline: { fontSize: 15, fontWeight: '600', color: '#2E2453', lineHeight: 21 },
-  aiDetail: { fontSize: 13.5, color: '#5B5480', marginTop: space.xs, lineHeight: 19 },
-  aiActions: { flexDirection: 'row', gap: space.sm, marginTop: space.md },
+  aiBadgeText: { fontSize: 9, fontWeight: "700", letterSpacing: 0.8, color: "#FFFFFF" },
+  aiConfidence: { fontSize: 11, color: "#6B5FA8", fontVariant: ["tabular-nums"] },
+  aiHeadline: { fontSize: 15, fontWeight: "600", color: "#2E2453", lineHeight: 21 },
+  aiDetail: { fontSize: 13.5, color: "#5B5480", marginTop: space.xs, lineHeight: 19 },
+  aiActions: { flexDirection: "row", gap: space.sm, marginTop: space.md },
   aiAccept: {
-    backgroundColor: '#5B4B9E',
+    backgroundColor: "#5B4B9E",
     borderRadius: radius.sm,
     paddingHorizontal: space.lg,
     paddingVertical: space.sm,
   },
-  aiAcceptText: { color: '#FFFFFF', fontSize: 13, fontWeight: '600' },
+  aiAcceptText: { color: "#FFFFFF", fontSize: 13, fontWeight: "600" },
   aiDismiss: {
     borderRadius: radius.sm,
     paddingHorizontal: space.lg,
     paddingVertical: space.sm,
   },
-  aiDismissText: { color: '#6B5FA8', fontSize: 13, fontWeight: '600' },
-  aiSettled: { fontSize: 12, color: '#6B5FA8', marginTop: space.md, fontStyle: 'italic' },
+  aiDismissText: { color: "#6B5FA8", fontSize: 13, fontWeight: "600" },
+  aiSettled: { fontSize: 12, color: "#6B5FA8", marginTop: space.md, fontStyle: "italic" },
   disclaimer: {
     ...type.caption,
     fontSize: 12,
     marginTop: space.lg,
     lineHeight: 17,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
 
   tile: {
@@ -337,24 +337,24 @@ const styles = StyleSheet.create({
     backgroundColor: color.surfaceSunken,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.borderStrong,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: space.sm,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
-  tileImage: { width: '100%', height: '100%' },
+  tileImage: { width: "100%", height: "100%" },
   tileGlyph: { fontSize: 20, color: color.textFaint },
   tileLabel: {
     fontSize: 9,
     color: color.textMuted,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: space.xs,
     lineHeight: 12,
   },
-  photoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  photoRow: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
 
-  timelineRow: { flexDirection: 'row', gap: space.md },
-  timelineGutter: { alignItems: 'center', width: 14 },
+  timelineRow: { flexDirection: "row", gap: space.md },
+  timelineGutter: { alignItems: "center", width: 14 },
   timelineDot: {
     width: 10,
     height: 10,
@@ -365,13 +365,13 @@ const styles = StyleSheet.create({
   timelineDotLast: { backgroundColor: color.accent },
   timelineLine: { flex: 1, width: StyleSheet.hairlineWidth, backgroundColor: color.borderStrong },
   timelineBody: { flex: 1, paddingBottom: space.lg },
-  timelineLabel: { fontSize: 14.5, fontWeight: '600', color: color.text },
+  timelineLabel: { fontSize: 14.5, fontWeight: "600", color: color.text },
   timelineNote: { fontSize: 13.5, color: color.textMuted, marginTop: 2, lineHeight: 19 },
   timelineMeta: { fontSize: 12, color: color.textFaint, marginTop: 3 },
 
   navRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: space.md,
     backgroundColor: color.surface,
     borderRadius: radius.md,
@@ -382,30 +382,30 @@ const styles = StyleSheet.create({
   },
   navRowPressed: { backgroundColor: color.surfaceSunken },
   navBody: { flex: 1 },
-  navTitle: { fontSize: 15, fontWeight: '600', color: color.text },
+  navTitle: { fontSize: 15, fontWeight: "600", color: color.text },
   navSub: { fontSize: 13, color: color.textMuted, marginTop: 2, lineHeight: 18 },
   navBadge: {
     minWidth: 22,
     height: 22,
     borderRadius: 11,
     backgroundColor: color.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 6,
   },
-  navBadgeText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
+  navBadgeText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
   navChevron: { fontSize: 22, color: color.textFaint },
 
   pill: {
     borderRadius: radius.pill,
     paddingHorizontal: space.md,
     paddingVertical: 4,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
-  pillText: { fontSize: 12, fontWeight: '600' },
+  pillText: { fontSize: 12, fontWeight: "600" },
 
   stat: { flex: 1 },
-  statValue: { fontSize: 22, fontWeight: '700', color: color.text, fontVariant: ['tabular-nums'] },
+  statValue: { fontSize: 22, fontWeight: "700", color: color.text, fontVariant: ["tabular-nums"] },
   statLabel: { fontSize: 12, color: color.textMuted, marginTop: 2 },
 
   empty: { ...type.bodyMuted, fontSize: 14, lineHeight: 21 },
