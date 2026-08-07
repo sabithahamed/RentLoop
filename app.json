@@ -26,7 +26,8 @@
           "photosPermission": "RentLoop needs access to your photos so you can attach a bank slip to a payment.",
           "cameraPermission": "RentLoop needs the camera so you can photograph a bank slip."
         }
-      ]
+      ],
+      "expo-font"
     ]
   }
 }

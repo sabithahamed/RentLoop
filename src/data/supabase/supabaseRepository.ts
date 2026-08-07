@@ -1,4 +1,4 @@
-import type { Repository, RecordPaymentInput, Session, SignUpInput } from '../repository';
+import type { Repository, RecordPaymentInput, Session, SignUpInput } from "../repository";
 import type {
   Cents,
   ISODate,
@@ -15,7 +15,7 @@ import type {
   TenancyDraft,
   TenancySummary,
   UUID,
-} from '../types';
+} from "../types";
 import type {
   Agreement,
   AreaComparison,
@@ -38,36 +38,36 @@ import type {
   Review,
   Role,
   Thread,
-} from '../lifecycleTypes';
+} from "../lifecycleTypes";
 
-import { supabase } from './client';
-import { deriveLedgerStatus, generatePeriods, firstOfMonth, todayISO } from '../ledger';
-import { RECEIPTS_BUCKET, receiptPath } from '../types';
+import { supabase } from "./client";
+import { deriveLedgerStatus, generatePeriods, firstOfMonth, todayISO } from "../ledger";
+import { RECEIPTS_BUCKET, receiptPath } from "../types";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function requireUserId(): string {
+async function requireUserId(): Promise<string> {
   const {
     data: { user },
-  } = supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
   return user.id;
 }
 
 async function ensurePeriods(tenancyId: UUID): Promise<void> {
   const { data: tenancy, error: tErr } = await supabase
-    .from('tenancies')
-    .select('*')
-    .eq('id', tenancyId)
+    .from("tenancies")
+    .select("*")
+    .eq("id", tenancyId)
     .single();
   if (tErr || !tenancy) throw new Error(`Tenancy not found: ${tenancyId}`);
 
   const generated = generatePeriods(tenancy as Tenancy);
 
   for (const p of generated) {
-    await supabase.from('rent_periods').upsert(
+    await supabase.from("rent_periods").upsert(
       {
         owner_id: p.owner_id,
         tenancy_id: p.tenancy_id,
@@ -75,16 +75,16 @@ async function ensurePeriods(tenancyId: UUID): Promise<void> {
         due_date: p.due_date,
         amount_due_cents: p.amount_due_cents,
       },
-      { onConflict: 'tenancy_id,period_month' },
+      { onConflict: "tenancy_id,period_month" },
     );
   }
 }
 
 async function getRentPeriodSummary(periodId: UUID): Promise<RentPeriodSummary> {
   const { data, error } = await supabase
-    .from('rent_period_summaries')
-    .select('*')
-    .eq('id', periodId)
+    .from("rent_period_summaries")
+    .select("*")
+    .eq("id", periodId)
     .single();
   if (error || !data) throw new Error(`Rent period not found: ${periodId}`);
   return data as RentPeriodSummary;
@@ -106,15 +106,15 @@ export const supabaseRepository: Repository = {
     if (!user) return null;
 
     const { data: profile } = await supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', user.id)
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
       .single();
 
     return {
       userId: user.id,
-      email: user.email ?? '',
-      displayName: profile?.display_name ?? user.email?.split('@')[0] ?? 'User',
+      email: user.email ?? "",
+      displayName: profile?.display_name ?? user.email?.split("@")[0] ?? "User",
     };
   },
 
@@ -124,15 +124,15 @@ export const supabaseRepository: Repository = {
 
     const user = data.user;
     const { data: profile } = await supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', user.id)
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
       .single();
 
     return {
       userId: user.id,
-      email: user.email ?? '',
-      displayName: profile?.display_name ?? user.email?.split('@')[0] ?? 'User',
+      email: user.email ?? "",
+      displayName: profile?.display_name ?? user.email?.split("@")[0] ?? "User",
     };
   },
 
@@ -145,16 +145,16 @@ export const supabaseRepository: Repository = {
     if (error) throw error;
 
     const user = data.user;
-    if (!user) throw new Error('Sign up succeeded but no user returned');
+    if (!user) throw new Error("Sign up succeeded but no user returned");
 
-    await supabase.from('profiles').upsert({
+    await supabase.from("profiles").upsert({
       id: user.id,
       display_name: input.displayName,
     });
 
     return {
       userId: user.id,
-      email: user.email ?? '',
+      email: user.email ?? "",
       displayName: input.displayName,
     };
   },
@@ -168,14 +168,14 @@ export const supabaseRepository: Repository = {
   // -------------------------------------------------------------------------
 
   async getTenancySummary(): Promise<TenancySummary | null> {
-    const userId = requireUserId();
+    const userId = await requireUserId();
 
     const { data: tenancy } = await supabase
-      .from('tenancies')
-      .select('*, property:properties(*), landlord:landlord_contacts(*)')
-      .eq('owner_id', userId)
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
+      .from("tenancies")
+      .select("*, property:properties(*), landlord:landlord_contacts(*)")
+      .eq("owner_id", userId)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
       .limit(1)
       .single();
 
@@ -189,13 +189,13 @@ export const supabaseRepository: Repository = {
   },
 
   async listTenancies(): Promise<TenancySummary[]> {
-    const userId = requireUserId();
+    const userId = await requireUserId();
 
     const { data: tenancies } = await supabase
-      .from('tenancies')
-      .select('*, property:properties(*), landlord:landlord_contacts(*)')
-      .eq('owner_id', userId)
-      .order('created_at', { ascending: false });
+      .from("tenancies")
+      .select("*, property:properties(*), landlord:landlord_contacts(*)")
+      .eq("owner_id", userId)
+      .order("created_at", { ascending: false });
 
     if (!tenancies) return [];
 
@@ -207,10 +207,10 @@ export const supabaseRepository: Repository = {
   },
 
   async createTenancy(draft: TenancyDraft): Promise<TenancySummary> {
-    const userId = requireUserId();
+    const userId = await requireUserId();
 
     const { data: property, error: pErr } = await supabase
-      .from('properties')
+      .from("properties")
       .insert({
         owner_id: userId,
         label: draft.propertyLabel,
@@ -219,10 +219,10 @@ export const supabaseRepository: Repository = {
       })
       .select()
       .single();
-    if (pErr || !property) throw new Error(pErr?.message ?? 'Failed to create property');
+    if (pErr || !property) throw new Error(pErr?.message ?? "Failed to create property");
 
     const { data: landlord, error: lErr } = await supabase
-      .from('landlord_contacts')
+      .from("landlord_contacts")
       .insert({
         owner_id: userId,
         full_name: draft.landlordName,
@@ -230,10 +230,10 @@ export const supabaseRepository: Repository = {
       })
       .select()
       .single();
-    if (lErr || !landlord) throw new Error(lErr?.message ?? 'Failed to create landlord contact');
+    if (lErr || !landlord) throw new Error(lErr?.message ?? "Failed to create landlord contact");
 
     const { data: tenancy, error: tErr } = await supabase
-      .from('tenancies')
+      .from("tenancies")
       .insert({
         owner_id: userId,
         property_id: property.id,
@@ -244,9 +244,13 @@ export const supabaseRepository: Repository = {
       })
       .select()
       .single();
-    if (tErr || !tenancy) throw new Error(tErr?.message ?? 'Failed to create tenancy');
+    if (tErr || !tenancy) throw new Error(tErr?.message ?? "Failed to create tenancy");
 
-    return { tenancy: tenancy as Tenancy, property: property as Property, landlord: landlord as LandlordContact };
+    return {
+      tenancy: tenancy as Tenancy,
+      property: property as Property,
+      landlord: landlord as LandlordContact,
+    };
   },
 
   // -------------------------------------------------------------------------
@@ -254,15 +258,15 @@ export const supabaseRepository: Repository = {
   // -------------------------------------------------------------------------
 
   async listLedger(tenancyId: UUID): Promise<LedgerRow[]> {
-    const userId = requireUserId();
+    const userId = await requireUserId();
     await ensurePeriods(tenancyId);
 
     const { data: periods } = await supabase
-      .from('rent_period_summaries')
-      .select('*')
-      .eq('tenancy_id', tenancyId)
-      .eq('owner_id', userId)
-      .order('period_month', { ascending: false });
+      .from("rent_period_summaries")
+      .select("*")
+      .eq("tenancy_id", tenancyId)
+      .eq("owner_id", userId)
+      .order("period_month", { ascending: false });
 
     if (!periods) return [];
 
@@ -279,10 +283,10 @@ export const supabaseRepository: Repository = {
     const status = deriveLedgerStatus(period);
 
     const { data: payments } = await supabase
-      .from('payments')
-      .select('*')
-      .eq('rent_period_id', rentPeriodId)
-      .order('paid_on', { ascending: true });
+      .from("payments")
+      .select("*")
+      .eq("rent_period_id", rentPeriodId)
+      .order("paid_on", { ascending: true });
 
     return {
       period: { ...period, status },
@@ -296,16 +300,16 @@ export const supabaseRepository: Repository = {
 
   async getPayment(paymentId: UUID): Promise<Payment> {
     const { data, error } = await supabase
-      .from('payments')
-      .select('*')
-      .eq('id', paymentId)
+      .from("payments")
+      .select("*")
+      .eq("id", paymentId)
       .single();
     if (error || !data) throw new Error(`Payment not found: ${paymentId}`);
     return data as Payment;
   },
 
   async recordPayment(input: RecordPaymentInput): Promise<Payment> {
-    const userId = requireUserId();
+    const userId = await requireUserId();
 
     let receiptPathValue: string | null = null;
     if (input.receiptUri) {
@@ -313,18 +317,18 @@ export const supabaseRepository: Repository = {
       const res = await supabase.storage
         .from(RECEIPTS_BUCKET)
         .upload(receiptPathValue, { uri: input.receiptUri } as any, {
-          contentType: 'image/jpeg',
+          contentType: "image/jpeg",
           upsert: true,
         });
       if (res.error) throw res.error;
     }
 
     const { data, error } = await supabase
-      .from('payments')
+      .from("payments")
       .insert({
         owner_id: userId,
         rent_period_id: input.rentPeriodId,
-        tenancy_id: '', // Denormalised — caller should provide, but mock doesn't either
+        tenancy_id: "", // Denormalised — caller should provide, but mock doesn't either
         amount_cents: input.amountCents,
         paid_on: input.paidOn,
         method: input.method,
@@ -339,21 +343,21 @@ export const supabaseRepository: Repository = {
   },
 
   async attachSlip(paymentId: UUID, receiptUri: string): Promise<Payment> {
-    const userId = requireUserId();
+    const userId = await requireUserId();
     const path = receiptPath(userId, paymentId);
 
     const res = await supabase.storage
       .from(RECEIPTS_BUCKET)
       .upload(path, { uri: receiptUri } as any, {
-        contentType: 'image/jpeg',
+        contentType: "image/jpeg",
         upsert: true,
       });
     if (res.error) throw res.error;
 
     const { data, error } = await supabase
-      .from('payments')
+      .from("payments")
       .update({ receipt_path: path })
-      .eq('id', paymentId)
+      .eq("id", paymentId)
       .select()
       .single();
     if (error) throw error;
@@ -378,9 +382,9 @@ export const supabaseRepository: Repository = {
 
   async getOverview(_tenancyId: UUID): Promise<LifecycleOverview> {
     return {
-      agreementStatus: 'none',
-      moveInStatus: 'not_started',
-      moveOutStatus: 'not_started',
+      agreementStatus: "none",
+      moveInStatus: "not_started",
+      moveOutStatus: "not_started",
       openTickets: 0,
       unreadThreads: 0,
       upcomingDeadlines: [],
@@ -391,20 +395,24 @@ export const supabaseRepository: Repository = {
     return null;
   },
   async uploadAgreement(_tenancyId: UUID, _fileName: string): Promise<Agreement> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
   async confirmTerm(_agreementId: UUID, _termId: UUID, _value: string): Promise<Agreement> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
 
   async getInspection(_tenancyId: UUID, _kind: InspectionKind): Promise<InspectionSession> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
-  async addInspectionPhoto(_areaId: UUID, _uri: string, _note: string | null): Promise<InspectionSession> {
-    throw new Error('Not yet implemented');
+  async addInspectionPhoto(
+    _areaId: UUID,
+    _uri: string,
+    _note: string | null,
+  ): Promise<InspectionSession> {
+    throw new Error("Not yet implemented");
   },
   async completeInspection(_sessionId: UUID): Promise<InspectionSession> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
   async compareInspections(_tenancyId: UUID): Promise<AreaComparison[]> {
     return [];
@@ -414,7 +422,7 @@ export const supabaseRepository: Repository = {
     return [];
   },
   async getTicket(_ticketId: UUID): Promise<MaintenanceTicket> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
   async createTicket(_input: {
     tenancyId: UUID;
@@ -423,52 +431,70 @@ export const supabaseRepository: Repository = {
     photoUris: string[];
     by: Role;
   }): Promise<MaintenanceTicket> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
-  async classifyTicket(_ticketId: UUID, _category: MaintenanceCategory, _urgency: MaintenanceUrgency): Promise<MaintenanceTicket> {
-    throw new Error('Not yet implemented');
+  async classifyTicket(
+    _ticketId: UUID,
+    _category: MaintenanceCategory,
+    _urgency: MaintenanceUrgency,
+  ): Promise<MaintenanceTicket> {
+    throw new Error("Not yet implemented");
   },
-  async advanceTicket(_ticketId: UUID, _status: MaintenanceStatus, _by: Role, _note: string | null): Promise<MaintenanceTicket> {
-    throw new Error('Not yet implemented');
+  async advanceTicket(
+    _ticketId: UUID,
+    _status: MaintenanceStatus,
+    _by: Role,
+    _note: string | null,
+  ): Promise<MaintenanceTicket> {
+    throw new Error("Not yet implemented");
   },
 
   async listThreads(_tenancyId: UUID): Promise<Thread[]> {
     return [];
   },
   async getThread(_threadId: UUID): Promise<Thread> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
   async sendMessage(_threadId: UUID, _by: Role, _body: string): Promise<Thread> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
   async startThread(_input: {
     tenancyId: UUID;
     subject: string;
-    about: Thread['about'];
+    about: Thread["about"];
     by: Role;
     body: string;
   }): Promise<Thread> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
 
   async getSettlement(_tenancyId: UUID): Promise<DepositSettlement> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
-  async proposeDeduction(_settlementId: UUID, _input: { label: string; amountCents: Cents; reason: string; evidenceAreaNames: string[] }, _by: Role): Promise<DepositSettlement> {
-    throw new Error('Not yet implemented');
+  async proposeDeduction(
+    _settlementId: UUID,
+    _input: { label: string; amountCents: Cents; reason: string; evidenceAreaNames: string[] },
+    _by: Role,
+  ): Promise<DepositSettlement> {
+    throw new Error("Not yet implemented");
   },
   async respondToDeduction(_deductionId: UUID, _agreed: boolean): Promise<DepositSettlement> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
   async settleDeposit(_settlementId: UUID): Promise<DepositSettlement> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
 
   async listReviews(_tenancyId: UUID): Promise<Review[]> {
     return [];
   },
-  async leaveReview(_input: { tenancyId: UUID; direction: Review['direction']; rating: number; body: string }): Promise<Review> {
-    throw new Error('Not yet implemented');
+  async leaveReview(_input: {
+    tenancyId: UUID;
+    direction: Review["direction"];
+    rating: number;
+    body: string;
+  }): Promise<Review> {
+    throw new Error("Not yet implemented");
   },
 
   async listReminders(_tenancyId: UUID, _forRole: Role): Promise<Reminder[]> {
@@ -476,43 +502,43 @@ export const supabaseRepository: Repository = {
   },
 
   async getRenewal(_tenancyId: UUID): Promise<Renewal> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
   async decideRenewal(_tenancyId: UUID, _intent: RenewalIntent): Promise<Renewal> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
 
   async getInvitation(_tenancyId: UUID): Promise<Invitation> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
   async sendInvitation(_tenancyId: UUID): Promise<Invitation> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
   async acceptInvitation(_tenancyId: UUID): Promise<Invitation> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
 
   async getReceipt(_paymentId: UUID): Promise<Receipt> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
   async issueReceipt(_paymentId: UUID): Promise<Receipt> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
 
   async listListings(): Promise<Listing[]> {
     return [];
   },
   async getListing(_listingId: UUID): Promise<Listing> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
   async enquire(_listingId: UUID, _message: string): Promise<Enquiry> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
 
   async getPortfolio(): Promise<PortfolioEntry[]> {
     return [];
   },
   async getPortfolioEntry(_tenancyId: UUID): Promise<PortfolioEntry> {
-    throw new Error('Not yet implemented');
+    throw new Error("Not yet implemented");
   },
 };

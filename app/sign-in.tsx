@@ -9,7 +9,7 @@ import { DEMO_EMAIL } from "@/data/mock/seed";
 import { color, space, type } from "@/theme";
 
 export default function SignInScreen() {
-  const { signIn, useDemoData } = useApp();
+  const { signIn, loadDemoData } = useApp();
   const insets = useSafeAreaInsets();
 
   const [email, setEmail] = useState(DEMO_EMAIL);
@@ -36,7 +36,7 @@ export default function SignInScreen() {
 
   const demo = async () => {
     setBusy(true);
-    await useDemoData();
+    await loadDemoData();
     setBusy(false);
     router.replace("/");
   };
