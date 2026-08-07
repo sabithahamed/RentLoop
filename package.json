@@ -8,11 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -34,12 +30,6 @@
     "typescript": "~5.9.2"
   },
   "devDependencies": {
-    "@eslint/js": "^9.28.0",
-    "babel-preset-expo": "^54.0.12",
-    "eslint": "^9.28.0",
-    "eslint-config-prettier": "^10.1.5",
-    "eslint-plugin-prettier": "^5.4.1",
-    "prettier": "^3.5.3",
-    "typescript-eslint": "^8.33.1"
+    "babel-preset-expo": "^54.0.12"
   }
 }
