@@ -11,7 +11,7 @@ import type { TenancySummary } from "@/data/types";
 import { color, space, type } from "@/theme";
 
 export default function TenantMore() {
-  const { session, repo, role, setRole, signOut, useDemoData } = useApp();
+  const { session, repo, role, setRole, signOut, loadDemoData } = useApp();
   const insets = useSafeAreaInsets();
 
   const { data: tenancies } = useAsync<TenancySummary[]>(() => repo.listTenancies(), []);
@@ -97,7 +97,7 @@ export default function TenantMore() {
           }}
           style={styles.roleButton}
         />
-        <Button label="Reset the demo data" variant="ghost" onPress={() => void useDemoData()} />
+        <Button label="Reset the demo data" variant="ghost" onPress={() => void loadDemoData()} />
       </Card>
 
       <Button

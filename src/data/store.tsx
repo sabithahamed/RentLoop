@@ -14,6 +14,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { mockRepository, resetToSeed } from "./mock/mockRepository";
+import { supabaseRepository } from "./supabase/supabaseRepository";
+import { isSupabaseConfigured } from "./supabase/client";
 import type { Repository, Session, SignUpInput } from "./repository";
 import type { Role } from "./lifecycleTypes";
 import type { TenancySummary } from "./types";
@@ -42,12 +44,12 @@ interface AppContextValue {
   signOut: () => Promise<void>;
   refreshTenancy: () => Promise<void>;
   /** Prototype affordance — jump straight back to the seeded demo ledger. */
-  useDemoData: () => Promise<void>;
+  loadDemoData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-const repo: Repository = mockRepository;
+const repo: Repository = isSupabaseConfigured ? supabaseRepository : mockRepository;
 
 /**
  * The chosen role outlives a reload.
@@ -127,7 +129,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setRevision((n) => n + 1);
   }, []);
 
-  const useDemoData = useCallback(async () => {
+  const loadDemoData = useCallback(async () => {
     resetToSeed();
     setSession(await repo.getSession());
     setTenancy(await repo.getTenancySummary());
@@ -148,7 +150,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signOut,
       refreshTenancy,
-      useDemoData,
+      loadDemoData,
     }),
     [
       session,
@@ -162,7 +164,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signOut,
       refreshTenancy,
-      useDemoData,
+      loadDemoData,
     ],
   );
 

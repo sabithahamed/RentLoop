@@ -17,9 +17,11 @@
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
     "@expo/vector-icons": "^15.0.2",
+    "@supabase/supabase-js": "^2.112.2",
     "@types/react": "~19.1.10",
     "expo": "^54.0.36",
     "expo-constants": "~18.0.13",
+    "expo-font": "~14.0.12",
     "expo-image-picker": "~17.0.11",
     "expo-linking": "~8.0.12",
     "expo-router": "~6.0.24",
@@ -39,6 +41,7 @@
     "eslint": "^9.28.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.4.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "prettier": "^3.5.3",
     "typescript-eslint": "^8.33.1"
   }
