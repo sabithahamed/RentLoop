@@ -15,6 +15,7 @@ export function StatusChip({ status, size = "md" }: { status: LedgerStatus; size
 
   return (
     <View style={[styles.chip, size === "sm" && styles.chipSm, { backgroundColor: bg }]}>
+      <View style={[styles.dot, size === "sm" && styles.dotSm, { backgroundColor: fg }]} />
       <Text style={[styles.label, size === "sm" && styles.labelSm, { color: fg }]}>
         {statusLabel[status]}
       </Text>
@@ -24,6 +25,9 @@ export function StatusChip({ status, size = "md" }: { status: LedgerStatus; size
 
 const styles = StyleSheet.create({
   chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
     paddingHorizontal: space.md,
     paddingVertical: 5,
     borderRadius: radius.pill,
@@ -33,6 +37,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.sm,
     paddingVertical: 3,
   },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  dotSm: { width: 5, height: 5, borderRadius: 2.5 },
   label: {
     fontSize: 13,
     fontWeight: "600",

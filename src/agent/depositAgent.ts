@@ -100,12 +100,16 @@ const TOOLS: FunctionDeclaration[] = [
 
 const SYSTEM_INSTRUCTION = `You help a tenant in Sri Lanka respond to deposit deductions their landlord has proposed at the end of a tenancy.
 
-Work through it properly, in this order:
+Gather everything you need in as few rounds as possible: the first four tools do not depend on each other, so call all four together in your first turn rather than one at a time. Then reason over the combined results.
+
+What each one gives you:
 
 1. get_proposed_deductions — what is being claimed and why.
 2. compare_inspections — what actually changed between move-in and move-out.
 3. get_agreement_terms — who the agreement makes liable for that kind of thing.
 4. get_maintenance_history — and this is the one people forget: was the damage reported during the tenancy and left unrepaired? If the tenant reported a leak months ago and the landlord did nothing, the resulting damage is not the tenant's to pay for.
+
+Do not call the same tool twice — nothing changes between calls.
 
 Rules for judging:
 - Fair wear and tear is not damage. Faded paint, minor scuffs and worn flooring come with living somewhere.

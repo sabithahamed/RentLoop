@@ -263,8 +263,8 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    height: 50,
-    borderRadius: radius.sm,
+    height: 52,
+    borderRadius: radius.sm + 2,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: space.xl,
@@ -272,12 +272,14 @@ const styles = StyleSheet.create({
   buttonPrimary: { backgroundColor: color.accent },
   buttonSecondary: {
     backgroundColor: color.accentSoft,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.accentBorder,
   },
   buttonGhost: { backgroundColor: "transparent" },
   buttonDanger: { backgroundColor: color.dangerSoft },
-  buttonPressed: { opacity: 0.82 },
+  buttonPressed: { opacity: 0.86, transform: [{ scale: 0.995 }] },
   buttonDisabled: { opacity: 0.45 },
-  buttonLabel: { fontSize: 15, fontWeight: "600" },
+  buttonLabel: { fontSize: 15.5, fontWeight: "600", letterSpacing: -0.1 },
 
   field: { marginBottom: space.lg },
   fieldLabel: {
@@ -285,19 +287,20 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: color.text,
     marginBottom: space.sm,
+    letterSpacing: -0.1,
   },
   input: {
-    height: 48,
+    height: 50,
     borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: color.borderStrong,
+    borderColor: color.border,
     backgroundColor: color.surface,
-    paddingHorizontal: space.md,
-    fontSize: 15,
+    paddingHorizontal: space.lg,
+    fontSize: 15.5,
     color: color.text,
   },
   inputMultiline: {
-    height: 88,
+    height: 96,
     paddingTop: space.md,
     textAlignVertical: "top",
   },
