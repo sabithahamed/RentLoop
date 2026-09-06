@@ -227,6 +227,12 @@ export interface Repository {
   /** Cities that actually have listings, for the filter row. */
   listListingCities(): Promise<string[]>;
   toggleSavedListing(listingId: UUID, saved: boolean): Promise<void>;
+  /**
+   * The number a landlord can call back on. Read and written by the enquiry
+   * form: an enquiry from someone unreachable is not an enquiry.
+   */
+  getContactPhone(): Promise<string | null>;
+  setContactPhone(phone: string): Promise<void>;
 
   // Posting a place — the landlord side of discovery
   /** The signed-in landlord's own listings, including ones taken down. */

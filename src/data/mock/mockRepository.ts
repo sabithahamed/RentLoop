@@ -921,6 +921,15 @@ export const mockRepository: Repository = {
     return delay(enquiry);
   },
 
+  async getContactPhone() {
+    return delay(contactPhone);
+  },
+
+  async setContactPhone(phone: string) {
+    contactPhone = phone.trim() || null;
+    return delay(undefined);
+  },
+
   // --- posting a place ------------------------------------------------------
   //
   // Mock listings the demo landlord posts are marked unverified with no track
@@ -1010,6 +1019,9 @@ export const mockRepository: Repository = {
     return delay(entry);
   },
 };
+
+/** The number this session would be called back on. */
+let contactPhone: string | null = null;
 
 /** Which listings this session posted, so "my listings" means something. */
 const mine = new Set<UUID>();

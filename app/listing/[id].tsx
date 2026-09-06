@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -39,6 +39,28 @@ export default function ListingScreen() {
   const [busy, setBusy] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
 
+  // A landlord cannot read your profile, so the number has to travel with the
+  // enquiry. Prefilled from the account when it is already there, and saved
+  // back so it only has to be typed once.
+  const [phone, setPhone] = useState("");
+  const [phoneLoaded, setPhoneLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!session || phoneLoaded) return;
+    let live = true;
+    repo
+      .getContactPhone()
+      .then((existing) => {
+        if (!live) return;
+        if (existing) setPhone(existing);
+        setPhoneLoaded(true);
+      })
+      .catch(() => setPhoneLoaded(true));
+    return () => {
+      live = false;
+    };
+  }, [repo, session, phoneLoaded]);
+
   const send = async () => {
     if (!message.trim()) return;
     if (!session) {
@@ -47,9 +69,16 @@ export default function ListingScreen() {
       );
       return;
     }
+    if (!phone.trim()) {
+      setSendError("Add a number — the landlord has no other way to reach you.");
+      return;
+    }
     setBusy(true);
     setSendError(null);
     try {
+      // Saved first: the database copies the number onto the enquiry as it is
+      // inserted, so an out-of-date profile would send an unreachable one.
+      await repo.setContactPhone(phone.trim());
       await repo.enquire(id, message.trim());
       setSent(true);
     } catch (e) {
@@ -224,13 +253,22 @@ export default function ListingScreen() {
                   onChangeText={setMessage}
                   multiline
                   placeholder="When is it available? Is the rent negotiable for a longer lease?"
+                />
+                <Field
+                  label="Your phone number"
+                  required
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                  placeholder="077 123 4567"
+                  hint="Sent with this enquiry so the landlord can call you back. Nobody else sees it."
                   error={sendError}
                 />
                 <Button
                   label="Send enquiry"
                   onPress={send}
                   loading={busy}
-                  disabled={!message.trim()}
+                  disabled={!message.trim() || !phone.trim()}
                 />
               </>
             )}

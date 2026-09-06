@@ -1358,6 +1358,21 @@ export const supabaseRepository: Repository = {
     return { listingId, sentOn: data.sent_on, message: data.message };
   },
 
+  async getContactPhone(): Promise<string | null> {
+    const userId = await requireUserId();
+    const { data } = await supabase.from("profiles").select("phone").eq("id", userId).single();
+    return data?.phone ?? null;
+  },
+
+  async setContactPhone(phone: string): Promise<void> {
+    const userId = await requireUserId();
+    const { error } = await supabase
+      .from("profiles")
+      .update({ phone: phone.trim() || null })
+      .eq("id", userId);
+    if (error) throw new Error(error.message);
+  },
+
   // --- posting a place ------------------------------------------------------
 
   async listMyListings(): Promise<Listing[]> {

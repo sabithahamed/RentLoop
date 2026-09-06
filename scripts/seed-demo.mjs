@@ -79,7 +79,11 @@ if (error) {
 const userId = auth.user.id;
 console.log(`✓ Signed in as ${DEMO_EMAIL}`);
 
-await supabase.from("profiles").upsert({ id: userId, display_name: DEMO_NAME });
+// The phone matters: an enquiry carries the sender's number so the landlord
+// can call back, and a demo account without one sends an unanswerable message.
+await supabase
+  .from("profiles")
+  .upsert({ id: userId, display_name: DEMO_NAME, phone: "077 555 0142" });
 
 // Wipe this account's tenancies; everything else cascades.
 const { data: old } = await supabase.from("tenancies").select("id").eq("owner_id", userId);
