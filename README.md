@@ -16,7 +16,7 @@ The moment this costs real money is move-out. A landlord proposes deductions, th
 
 ## What it does
 
-**36 screens**, both sides of the tenancy, running on mock data with four live AI agents.
+**38 screens**, both sides of the tenancy, running on Supabase with four live AI agents.
 
 ### Tenant
 
@@ -30,6 +30,7 @@ The moment this costs real money is move-out. A landlord proposes deductions, th
 - **Reminders** — derived from live state, not authored. They disappear when dealt with.
 - **Renewal and notice** — the notice deadline stated in days, because it is the one date you cannot recover from missing.
 - **Deposit settlement** — deduction by deduction, with the evidence behind each.
+- **Find a place** — real listings with photographs, searchable by area, budget, bedrooms, type and furnishing, with a shortlist and enquiries. The filter no other listing site can offer is **verified landlord**: someone RentLoop watched carry a tenancy through to a settled deposit.
 
 ### Landlord
 
@@ -37,7 +38,9 @@ Portfolio with arrears at a glance, property detail, repairs queue, inbox. Switc
 
 ### Tenant-only vs connected mode
 
-RentLoop works with a landlord who has never heard of it — that is the default. Everything the tenant records is theirs. Inviting the landlord is additive: the same records, now shared.
+RentLoop works with a landlord who has never heard of it — that is the default. Everything the tenant records is theirs.
+
+Connected mode is real, not simulated. The tenant generates a code; the landlord installs the app, creates their own account, and enters it. That creates a membership row, and row-level security widens from "the owner" to "the owner or a member" everywhere at once. Verified with two separate accounts in `scripts/verify-connected.mjs`: before redeeming the landlord sees nothing, after redeeming they see the tenancy, its ledger and its repairs, and an unrelated third account still sees nothing.
 
 ---
 
@@ -45,14 +48,15 @@ RentLoop works with a landlord who has never heard of it — that is the default
 
 Matches the original proposal, with two pivots explained below.
 
-| Layer       | Choice                                                                                |
-| ----------- | ------------------------------------------------------------------------------------- |
-| Mobile      | React Native via **Expo SDK 54**, TypeScript (strict)                                 |
-| Navigation  | expo-router (file-based)                                                              |
-| AI          | **Google Gemini** (`gemini-flash-latest`) — multimodal, function calling              |
-| Data (now)  | In-memory mock behind a `Repository` interface                                        |
-| Data (next) | Supabase — Postgres, Auth, Storage. Schema and repository exist on `feature/database` |
-| CI          | GitHub Actions — lint, format check, typecheck                                        |
+| Layer      | Choice                                                                             |
+| ---------- | ---------------------------------------------------------------------------------- |
+| Mobile     | React Native via **Expo SDK 54**, TypeScript (strict)                              |
+| Navigation | expo-router (file-based)                                                           |
+| AI         | **Google Gemini** (`gemini-flash-latest`) — multimodal, function calling           |
+| Data       | **Supabase** — Postgres with row-level security, Auth, Storage                     |
+| AI hosting | Supabase Edge Function, so the API key never reaches a device                      |
+| Fallback   | In-memory mock behind the same `Repository` interface, used when Supabase is unset |
+| CI         | GitHub Actions — lint, format check, typecheck                                     |
 
 ### Pivots from the proposal, and why
 
@@ -62,7 +66,7 @@ Matches the original proposal, with two pivots explained below.
 
 **Landlord view is in the mobile app, not a separate web dashboard.** The proposal put the landlord on web. Both roles share one codebase for now because the double-sided story is what needed proving, not the form factor. A wider web layout is a rendering concern, not a rewrite — the screens already run on react-native-web.
 
-**Mock data, not live.** Explicitly permitted at this stage. The seam is real: screens depend on `src/data/repository.ts` and never on an implementation, so swapping in Supabase means adding one file, not touching 36 screens.
+**Live data, not mock.** Everything persists in Postgres: accounts, tenancies, payments, agreements, inspections, repairs, messages, deposits, listings. The mock still exists behind the same `Repository` interface and runs automatically when Supabase is not configured, so the app works on a fresh clone with no setup.
 
 ---
 
@@ -125,11 +129,34 @@ Observed: it caught a duplicate ticket, refused to guess liability because the a
 npm install
 ```
 
-Copy `.env.example` to `.env` and add a Gemini API key from [aistudio.google.com](https://aistudio.google.com) (free tier is enough):
+**Without any setup**, the app runs on the seeded in-memory mock — every screen works, the agents are disabled. That is enough to look around.
+
+**For the real thing**, copy `.env.example` to `.env` and fill in:
 
 ```
-EXPO_PUBLIC_GEMINI_API_KEY=your_key_here
+EXPO_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=<publishable key>
+EXPO_PUBLIC_GEMINI_API_KEY=<key from aistudio.google.com>
+DATABASE_URL=postgresql://postgres:<password>@db.<project>.supabase.co:5432/postgres
 ```
+
+`DATABASE_URL` is deliberately not prefixed `EXPO_PUBLIC_`, so it is never compiled into the app bundle — it is a migration tool credential only.
+
+Apply the schema and seed, in order:
+
+```bash
+node scripts/db.mjs supabase/schema.sql
+node scripts/db.mjs supabase/002_lifecycle.sql
+node scripts/db.mjs supabase/003_discovery.sql
+node scripts/db.mjs supabase/004_invites.sql
+node scripts/db.mjs supabase/005_ai_usage.sql
+node scripts/seed-demo.mjs
+node scripts/seed-listings.mjs
+```
+
+Then turn **off** "Confirm email" in Supabase → Authentication → Sign In / Providers → Email. Otherwise every sign-up tries to send a confirmation message and the free tier allows about two an hour.
+
+Sign in as **tenant@rentloop.lk / demo1234**.
 
 Verify the key and find a model your account can actually call — a model being listed by the API does **not** mean your key can use it:
 
@@ -150,12 +177,19 @@ The app opens on a seeded tenancy with six months of history covering every paym
 ### Checks
 
 ```bash
-npm run typecheck && npm run lint && npm run format:check
+npm run typecheck && npm run lint && npm run format:check && npm test
+```
+
+Two scripts verify the security model against the live database rather than assuming it:
+
+```bash
+node scripts/verify-rls.mjs        # two users, neither can read the other's data
+node scripts/verify-connected.mjs  # invite, redeem, and a third party still locked out
 ```
 
 > **Windows note:** `format:check` flags every file locally because Git checks out CRLF while Prettier expects LF. CI runs on Linux and passes. Not a real failure.
 
-> **Security note:** `EXPO_PUBLIC_` variables are compiled into the app bundle and can be extracted. Acceptable for a prototype, not for release — see Future plans.
+> **Security note:** anything prefixed `EXPO_PUBLIC_` is compiled into the app bundle and can be extracted. The Supabase anon key is meant to be public — row-level security is the boundary, not key secrecy. The Gemini key is not, which is why it lives in an Edge Function; the `EXPO_PUBLIC_GEMINI_API_KEY` fallback is for local development only and must not be set in a release build.
 
 ---
 
@@ -183,17 +217,22 @@ SPEC.md                 payments data model, with the reasoning behind each deci
 
 **Immediately next**
 
-- **Merge the Supabase layer.** `feature/database` has the schema, client and repository. Its lifecycle methods are stubs and need filling before it can replace the mock.
-- **Move the AI key server-side.** A Supabase Edge Function holding the Gemini key removes the one genuine security compromise in this build.
-- **Agent memory.** Nothing persists between runs today. A deposit analysis should remember what the landlord already conceded.
+- **Deploy the Edge Function.** The code is in `supabase/functions/gemini`; until it is deployed the app falls back to a local key.
+  ```bash
+  supabase functions deploy gemini --project-ref <ref>
+  supabase secrets set GEMINI_API_KEY=... --project-ref <ref>
+  ```
+- **Push notifications.** Reminders are computed correctly but only when the app is opened, which undercuts the retention argument entirely.
+- **Agent memory.** Nothing persists between runs. A deposit analysis should remember what the landlord already conceded.
 
 **Then**
 
 - Attach inspection evidence directly to deductions, so a disputed charge links to the photo that rebuts it
-- Push reminders — the retention loop only works if it reaches the phone
-- Per-tenant rent ledger and receipt issuing for landlords
-- PDF export of the deposit evidence pack
+- Landlords posting their own listings, rather than seeded stock
+- PDF export of the deposit evidence pack and of receipts
+- Per-tenant rent ledger and receipt issuing on the landlord side
 - Payment gateway integration (PayHere, LankaQR) so rent is paid in-app, not just recorded
+- Account deletion and data export, which any real launch needs before the first user
 
 **Later** — the technician marketplace from the original proposal, once there is a tenancy base to serve.
 

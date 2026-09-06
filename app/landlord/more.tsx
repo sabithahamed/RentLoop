@@ -25,6 +25,11 @@ export default function LandlordMore() {
       <SectionLabel>Tenancies</SectionLabel>
       <View style={styles.rows}>
         <NavRow
+          title="Join a tenancy"
+          subtitle="Enter the code your tenant sent you"
+          onPress={() => router.push("/join")}
+        />
+        <NavRow
           title="Deposit settlements"
           subtitle="Move-out comparisons and deductions"
           onPress={() => router.push("/deposit")}

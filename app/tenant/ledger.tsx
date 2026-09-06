@@ -81,7 +81,7 @@ export default function LedgerScreen() {
           </View>
         </View>
 
-        {/* Tenant-only mode. Connected mode is a later slice — flagged, not built. */}
+        {/* Tenant-only mode. Inviting the landlord makes this one shared record. */}
         {landlord.linked_user_id === null ? (
           <View style={styles.inviteStrip}>
             <Text style={styles.inviteText}>

@@ -39,16 +39,6 @@ export default function InviteScreen() {
     }
   };
 
-  const simulateAccept = async () => {
-    if (!tenancyId) return;
-    setBusy(true);
-    try {
-      await repo.acceptInvitation(tenancyId);
-      invalidate();
-    } finally {
-      setBusy(false);
-    }
-  };
 
   if (loading && !invitation) return <LoadingState />;
   if (!invitation || !tenancy) return null;
@@ -109,19 +99,12 @@ export default function InviteScreen() {
                 <Text style={styles.codeLabel}>Their code</Text>
                 <Text style={styles.code}>{invitation.code}</Text>
                 <Text style={styles.codeHelp}>
-                  {name} enters this in RentLoop after installing it. Sent{" "}
+                  Send this to {name}. They install RentLoop, create their own account, and enter
+                  the code under &quot;I have an invite code&quot; on the sign-in screen. Sent{" "}
                   {invitation.sentOn ? formatDate(invitation.sentOn) : "today"}.
                 </Text>
-                <Button
-                  label="Simulate them accepting"
-                  variant="secondary"
-                  onPress={simulateAccept}
-                  loading={busy}
-                  style={styles.action}
-                />
                 <Text style={styles.demoNote}>
-                  Prototype only — there is no real invite to send, so this stands in for the other
-                  side accepting.
+                  The code works once. Until they use it they cannot see anything of yours.
                 </Text>
               </Card>
             ) : (
