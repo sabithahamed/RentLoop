@@ -256,23 +256,6 @@ export interface Review {
 // Discovery
 // ---------------------------------------------------------------------------
 
-/**
- * Deliberately thin. The vision doc is emphatic that RentLoop is not a listing
- * app; discovery exists only as the entry point to a tenancy, and the useful
- * difference is that a listing carries the landlord's RentLoop track record.
- */
-export interface Listing {
-  id: UUID;
-  title: string;
-  city: string;
-  rentCents: Cents;
-  bedrooms: number;
-  landlordName: string;
-  landlordRating: number | null;
-  landlordTenancyCount: number;
-  verified: boolean;
-}
-
 // ---------------------------------------------------------------------------
 // Reminders
 // ---------------------------------------------------------------------------
@@ -373,6 +356,74 @@ export interface Receipt {
   tenantName: string;
   landlordName: string;
   method: string;
+}
+
+// ---------------------------------------------------------------------------
+
+export type PropertyType = "annex" | "apartment" | "house" | "room" | "boarding";
+export type Furnishing = "unfurnished" | "semi" | "furnished";
+
+export const PROPERTY_TYPE_LABEL: Record<PropertyType, string> = {
+  annex: "Annex",
+  apartment: "Apartment",
+  house: "House",
+  room: "Room",
+  boarding: "Boarding",
+};
+
+export const FURNISHING_LABEL: Record<Furnishing, string> = {
+  unfurnished: "Unfurnished",
+  semi: "Semi-furnished",
+  furnished: "Furnished",
+};
+
+export interface ListingPhoto {
+  id: UUID;
+  /** Public URL — listing photos are advertising, not evidence. */
+  url: string;
+  caption: string | null;
+}
+
+/**
+ * A place to rent.
+ *
+ * RentLoop is not trying to out-listing the listing sites, and the vision doc
+ * says so. What it can show that they cannot is `verified`, `rating` and
+ * `tenancyCount` — a landlord's record across tenancies this app watched from
+ * agreement to deposit. That is the reason to look here rather than elsewhere.
+ */
+export interface Listing {
+  id: UUID;
+  title: string;
+  description: string;
+  city: string;
+  addressLine: string | null;
+  rentCents: Cents;
+  depositCents: Cents | null;
+  bedrooms: number;
+  bathrooms: number;
+  propertyType: PropertyType;
+  furnished: Furnishing;
+  availableFrom: ISODate | null;
+  landlordName: string;
+  landlordRating: number | null;
+  landlordTenancyCount: number;
+  verified: boolean;
+  photos: ListingPhoto[];
+  saved: boolean;
+}
+
+/** What the search screen filters by. Every field optional — none is required. */
+export interface ListingFilters {
+  query?: string;
+  city?: string;
+  minRentCents?: number;
+  maxRentCents?: number;
+  bedrooms?: number;
+  propertyType?: PropertyType;
+  furnished?: Furnishing;
+  verifiedOnly?: boolean;
+  savedOnly?: boolean;
 }
 
 // ---------------------------------------------------------------------------

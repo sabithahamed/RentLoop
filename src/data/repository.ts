@@ -32,6 +32,7 @@ import type {
   Invitation,
   LifecycleOverview,
   Listing,
+  ListingFilters,
   MaintenanceCategory,
   MaintenanceStatus,
   MaintenanceTicket,
@@ -211,9 +212,12 @@ export interface Repository {
   issueReceipt(paymentId: UUID): Promise<Receipt>;
 
   // Discovery
-  listListings(): Promise<Listing[]>;
+  listListings(filters?: ListingFilters): Promise<Listing[]>;
   getListing(listingId: UUID): Promise<Listing>;
   enquire(listingId: UUID, message: string): Promise<Enquiry>;
+  /** Cities that actually have listings, for the filter row. */
+  listListingCities(): Promise<string[]>;
+  toggleSavedListing(listingId: UUID, saved: boolean): Promise<void>;
 
   // Landlord side
   getPortfolio(): Promise<PortfolioEntry[]>;

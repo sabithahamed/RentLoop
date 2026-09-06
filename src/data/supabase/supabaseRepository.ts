@@ -23,6 +23,7 @@ import type {
   Invitation,
   LifecycleOverview,
   Listing,
+  ListingFilters,
   MaintenanceCategory,
   MaintenanceStatus,
   MaintenanceTicket,
@@ -1268,23 +1269,72 @@ export const supabaseRepository: Repository = {
   },
 
   // Discovery ----------------------------------------------------------------
-  //
-  // Not backed by the database. Discovery is the one part of the vision doc
-  // RentLoop deliberately does not try to own, so it stays a fixed sample
-  // rather than a listings table nobody maintains.
 
-  async listListings(): Promise<Listing[]> {
-    return DEMO_LISTINGS;
+  async listListings(filters: ListingFilters = {}): Promise<Listing[]> {
+    let query = supabase
+      .from("listings")
+      .select("*, listing_photos(id, storage_path, caption, position)")
+      .eq("is_active", true);
+
+    if (filters.city) query = query.eq("city", filters.city);
+    if (filters.propertyType) query = query.eq("property_type", filters.propertyType);
+    if (filters.furnished) query = query.eq("furnished", filters.furnished);
+    if (filters.verifiedOnly) query = query.eq("verified", true);
+    if (filters.minRentCents != null) query = query.gte("rent_cents", filters.minRentCents);
+    if (filters.maxRentCents != null) query = query.lte("rent_cents", filters.maxRentCents);
+    // "2 bedrooms" means at least two — nobody searching for a 2BR wants a 3BR hidden.
+    if (filters.bedrooms != null) query = query.gte("bedrooms", filters.bedrooms);
+    if (filters.query) {
+      const q = `%${filters.query}%`;
+      query = query.or(`title.ilike.${q},description.ilike.${q},city.ilike.${q}`);
+    }
+
+    const { data, error } = await query.order("verified", { ascending: false }).order("rent_cents");
+    if (error) throw new Error(error.message);
+
+    const saved = await savedListingIds();
+    const listings = (data ?? []).map((row) => toListing(row, saved));
+
+    return filters.savedOnly ? listings.filter((l) => l.saved) : listings;
   },
 
   async getListing(listingId: UUID): Promise<Listing> {
-    const listing = DEMO_LISTINGS.find((l) => l.id === listingId);
-    if (!listing) throw new Error("Listing not found");
-    return listing;
+    const { data, error } = await supabase
+      .from("listings")
+      .select("*, listing_photos(id, storage_path, caption, position)")
+      .eq("id", listingId)
+      .single();
+    if (error) throw new Error(error.message);
+    return toListing(data, await savedListingIds());
+  },
+
+  async listListingCities(): Promise<string[]> {
+    const { data } = await supabase.from("listings").select("city").eq("is_active", true);
+    return [...new Set((data ?? []).map((r) => r.city as string))].sort();
+  },
+
+  async toggleSavedListing(listingId: UUID, saved: boolean): Promise<void> {
+    const userId = await requireUserId();
+    if (saved) {
+      await supabase.from("saved_listings").upsert({ user_id: userId, listing_id: listingId });
+    } else {
+      await supabase
+        .from("saved_listings")
+        .delete()
+        .eq("user_id", userId)
+        .eq("listing_id", listingId);
+    }
   },
 
   async enquire(listingId: UUID, message: string): Promise<Enquiry> {
-    return { listingId, sentOn: todayISO(), message };
+    const userId = await requireUserId();
+    const { data, error } = await supabase
+      .from("enquiries")
+      .insert({ listing_id: listingId, from_user: userId, message })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return { listingId, sentOn: data.sent_on, message: data.message };
   },
 
   // Landlord side ------------------------------------------------------------
@@ -1575,6 +1625,50 @@ function toInvitation(row: any): Invitation {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
+/** Ids this user has saved. One query rather than one per card. */
+async function savedListingIds(): Promise<Set<string>> {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return new Set();
+  const { data } = await supabase
+    .from("saved_listings")
+    .select("listing_id")
+    .eq("user_id", auth.user.id);
+  return new Set((data ?? []).map((r) => r.listing_id as string));
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function toListing(row: any, saved: Set<string>): Listing {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description ?? "",
+    city: row.city,
+    addressLine: row.address_line ?? null,
+    rentCents: row.rent_cents,
+    depositCents: row.deposit_cents ?? null,
+    bedrooms: row.bedrooms,
+    bathrooms: row.bathrooms,
+    propertyType: row.property_type,
+    furnished: row.furnished,
+    availableFrom: row.available_from ?? null,
+    landlordName: row.landlord_name,
+    landlordRating: row.rating ?? null,
+    landlordTenancyCount: row.tenancy_count ?? 0,
+    verified: row.verified,
+    saved: saved.has(row.id),
+    photos: (row.listing_photos ?? [])
+      .slice()
+      .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
+      .map((p: any) => ({
+        id: p.id,
+        // Listing photos live in a public bucket, so no signing round-trip.
+        url: supabase.storage.from("listing-photos").getPublicUrl(p.storage_path).data.publicUrl,
+        caption: p.caption ?? null,
+      })),
+  };
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 async function refreshSettlement(settlementId: UUID): Promise<DepositSettlement> {
   const { data, error } = await supabase
     .from("deposit_settlements")
@@ -1678,50 +1772,3 @@ const MISSING_AREA_REASON: Record<string, string> = {
   "Toilet and fittings":
     "Cracks in ceramic are expensive and easy to blame on whoever leaves last.",
 };
-
-const DEMO_LISTINGS: Listing[] = [
-  {
-    id: "lst-1",
-    title: "Annex with separate entrance",
-    city: "Nugegoda",
-    rentCents: 48_000_00,
-    bedrooms: 2,
-    landlordName: "S. Wickramasinghe",
-    landlordRating: 4.6,
-    landlordTenancyCount: 7,
-    verified: true,
-  },
-  {
-    id: "lst-2",
-    title: "Upstairs unit, quiet lane",
-    city: "Dehiwala",
-    rentCents: 55_000_00,
-    bedrooms: 2,
-    landlordName: "M. Fernando",
-    landlordRating: 4.9,
-    landlordTenancyCount: 12,
-    verified: true,
-  },
-  {
-    id: "lst-3",
-    title: "Single room, meals optional",
-    city: "Ratmalana",
-    rentCents: 22_000_00,
-    bedrooms: 1,
-    landlordName: "K. Gunasekara",
-    landlordRating: null,
-    landlordTenancyCount: 0,
-    verified: false,
-  },
-  {
-    id: "lst-4",
-    title: "3BR house with garden",
-    city: "Kotte",
-    rentCents: 95_000_00,
-    bedrooms: 3,
-    landlordName: "A. Rajapaksha",
-    landlordRating: 3.8,
-    landlordTenancyCount: 4,
-    verified: true,
-  },
-];

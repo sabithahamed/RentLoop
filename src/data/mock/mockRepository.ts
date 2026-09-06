@@ -41,6 +41,7 @@ import type {
   Invitation,
   LifecycleOverview,
   Listing,
+  ListingFilters,
   MaintenanceCategory,
   MaintenanceStatus,
   MaintenanceTicket,
@@ -857,8 +858,36 @@ export const mockRepository: Repository = {
 
   // Discovery / landlord -----------------------------------------------------
 
-  async listListings() {
-    return delay(state.listings);
+  async listListings(filters: ListingFilters = {}) {
+    let list = state.listings;
+
+    if (filters.city) list = list.filter((l) => l.city === filters.city);
+    if (filters.propertyType) list = list.filter((l) => l.propertyType === filters.propertyType);
+    if (filters.furnished) list = list.filter((l) => l.furnished === filters.furnished);
+    if (filters.verifiedOnly) list = list.filter((l) => l.verified);
+    if (filters.minRentCents != null)
+      list = list.filter((l) => l.rentCents >= filters.minRentCents!);
+    if (filters.maxRentCents != null)
+      list = list.filter((l) => l.rentCents <= filters.maxRentCents!);
+    // At least N bedrooms — nobody searching for a 2BR wants a 3BR hidden.
+    if (filters.bedrooms != null) list = list.filter((l) => l.bedrooms >= filters.bedrooms!);
+    if (filters.savedOnly) list = list.filter((l) => l.saved);
+    if (filters.query) {
+      const q = filters.query.toLowerCase();
+      list = list.filter((l) => `${l.title} ${l.description} ${l.city}`.toLowerCase().includes(q));
+    }
+
+    return delay(list);
+  },
+
+  async listListingCities() {
+    return delay([...new Set(state.listings.map((l) => l.city))].sort());
+  },
+
+  async toggleSavedListing(listingId: UUID, saved: boolean) {
+    const listing = state.listings.find((l) => l.id === listingId);
+    if (listing) listing.saved = saved;
+    return delay(undefined);
   },
 
   async getListing(listingId: UUID) {

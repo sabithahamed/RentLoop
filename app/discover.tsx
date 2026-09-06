@@ -1,127 +1,307 @@
-import React from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Stack, router } from "expo-router";
 
-import { Pill, Stars } from "@/components/lifecycle";
+import { ListingCard } from "@/components/ListingCard";
 import { Card, LoadingState } from "@/components/ui";
 import { useApp, useAsync } from "@/data/store";
 import { formatLKR } from "@/data/ledger";
-import type { Listing } from "@/data/lifecycleTypes";
+import {
+  PROPERTY_TYPE_LABEL,
+  type Listing,
+  type ListingFilters,
+  type PropertyType,
+} from "@/data/lifecycleTypes";
 import { color, radius, space, type } from "@/theme";
 
+const BUDGETS: { label: string; max?: number; min?: number }[] = [
+  { label: "Under 25k", max: 25_000_00 },
+  { label: "25k–50k", min: 25_000_00, max: 50_000_00 },
+  { label: "50k–80k", min: 50_000_00, max: 80_000_00 },
+  { label: "80k+", min: 80_000_00 },
+];
+
 /**
- * Discovery — deliberately the thinnest surface in the app.
+ * Finding a place.
  *
- * RentLoop is not a listing site and should not try to win on inventory. The
- * one thing it can show that a listing site cannot is what the landlord was
- * actually like to rent from, so that is what each card leads with.
+ * The filters are the ones people actually use — where, how much, how many
+ * bedrooms — and nothing else. The column RentLoop can offer that a listings
+ * site cannot is "verified landlord": someone this app watched carry a tenancy
+ * through to a settled deposit. That is why it gets its own filter.
  */
 export default function DiscoverScreen() {
-  const { repo } = useApp();
-  const { data: listings, loading } = useAsync<Listing[]>(() => repo.listListings(), []);
+  const { repo, invalidate, session } = useApp();
+
+  const [query, setQuery] = useState("");
+  const [city, setCity] = useState<string | undefined>();
+  const [budget, setBudget] = useState<number | undefined>();
+  const [bedrooms, setBedrooms] = useState<number | undefined>();
+  const [propertyType, setPropertyType] = useState<PropertyType | undefined>();
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [savedOnly, setSavedOnly] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+
+  const filters: ListingFilters = {
+    query: query.trim() || undefined,
+    city,
+    bedrooms,
+    propertyType,
+    verifiedOnly: verifiedOnly || undefined,
+    savedOnly: savedOnly || undefined,
+    minRentCents: budget !== undefined ? BUDGETS[budget].min : undefined,
+    maxRentCents: budget !== undefined ? BUDGETS[budget].max : undefined,
+  };
+
+  const { data: cities } = useAsync<string[]>(() => repo.listListingCities(), []);
+  const { data: listings, loading } = useAsync<Listing[]>(
+    () => repo.listListings(filters),
+    [query, city, budget, bedrooms, propertyType, verifiedOnly, savedOnly],
+  );
+
+  const activeCount =
+    [city, budget, bedrooms, propertyType].filter((f) => f !== undefined).length +
+    (verifiedOnly ? 1 : 0) +
+    (savedOnly ? 1 : 0);
+
+  const clearAll = () => {
+    setCity(undefined);
+    setBudget(undefined);
+    setBedrooms(undefined);
+    setPropertyType(undefined);
+    setVerifiedOnly(false);
+    setSavedOnly(false);
+  };
+
+  // Browsing works signed out — that is how anyone finds a place in the first
+  // place. Saving needs an account, so say so instead of failing silently.
+  const [needsAccount, setNeedsAccount] = useState(false);
+
+  const toggleSave = async (listing: Listing) => {
+    if (!session) {
+      setNeedsAccount(true);
+      return;
+    }
+    try {
+      await repo.toggleSavedListing(listing.id, !listing.saved);
+      invalidate();
+    } catch {
+      setNeedsAccount(true);
+    }
+  };
 
   return (
     <>
       <Stack.Screen options={{ title: "Find a place" }} />
-      <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
-        <Card>
-          <Text style={type.heading}>Rent from someone with a record</Text>
-          <Text style={styles.intro}>
-            These are ordinary listings. The difference is the landlord's history — how many
-            tenancies they have completed on RentLoop, and what those tenants said afterwards.
-          </Text>
-        </Card>
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search by area, type or description"
+          placeholderTextColor={color.textFaint}
+          style={styles.search}
+          returnKeyType="search"
+        />
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipRow}
+        >
+          <Chip
+            label={
+              showFilters ? "Hide filters" : `Filters${activeCount ? ` · ${activeCount}` : ""}`
+            }
+            active={showFilters || activeCount > 0}
+            onPress={() => setShowFilters((s) => !s)}
+          />
+          <Chip label="Verified" active={verifiedOnly} onPress={() => setVerifiedOnly((v) => !v)} />
+          {session ? (
+            <Chip label="♥ Saved" active={savedOnly} onPress={() => setSavedOnly((v) => !v)} />
+          ) : null}
+          {BUDGETS.map((b, i) => (
+            <Chip
+              key={b.label}
+              label={b.label}
+              active={budget === i}
+              onPress={() => setBudget(budget === i ? undefined : i)}
+            />
+          ))}
+        </ScrollView>
+
+        {showFilters ? (
+          <Card style={styles.filters}>
+            <FilterGroup label="City">
+              {(cities ?? []).map((c) => (
+                <Chip
+                  key={c}
+                  label={c}
+                  active={city === c}
+                  onPress={() => setCity(city === c ? undefined : c)}
+                />
+              ))}
+            </FilterGroup>
+
+            <FilterGroup label="Bedrooms (at least)">
+              {[1, 2, 3].map((n) => (
+                <Chip
+                  key={n}
+                  label={`${n}+`}
+                  active={bedrooms === n}
+                  onPress={() => setBedrooms(bedrooms === n ? undefined : n)}
+                />
+              ))}
+            </FilterGroup>
+
+            <FilterGroup label="Type">
+              {(Object.keys(PROPERTY_TYPE_LABEL) as PropertyType[]).map((t) => (
+                <Chip
+                  key={t}
+                  label={PROPERTY_TYPE_LABEL[t]}
+                  active={propertyType === t}
+                  onPress={() => setPropertyType(propertyType === t ? undefined : t)}
+                />
+              ))}
+            </FilterGroup>
+
+            {activeCount > 0 ? (
+              <Pressable accessibilityRole="button" onPress={clearAll} style={styles.clear}>
+                <Text style={styles.clearText}>Clear all filters</Text>
+              </Pressable>
+            ) : null}
+          </Card>
+        ) : null}
+
+        {needsAccount ? (
+          <Card style={styles.needAccount}>
+            <Text style={type.heading}>Sign in to save places</Text>
+            <Text style={styles.emptyText}>
+              Browsing is open to everyone. Saving a shortlist needs an account so it follows you
+              between devices.
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push("/sign-in")}
+              style={styles.clear}
+            >
+              <Text style={styles.clearText}>Sign in or create an account</Text>
+            </Pressable>
+          </Card>
+        ) : null}
+
+        <Text style={styles.count}>
+          {loading && !listings
+            ? "Searching…"
+            : `${listings?.length ?? 0} place${listings?.length === 1 ? "" : "s"}`}
+          {listings && listings.length > 0
+            ? ` · from ${formatLKR(Math.min(...listings.map((l) => l.rentCents)))}`
+            : ""}
+        </Text>
 
         {loading && !listings ? (
           <View style={styles.loading}>
-            <LoadingState />
+            <LoadingState label="Finding places" />
           </View>
+        ) : listings && listings.length === 0 ? (
+          <Card>
+            <Text style={type.heading}>Nothing matches</Text>
+            <Text style={styles.emptyText}>
+              {savedOnly
+                ? "You have not saved any places yet. Tap the heart on one you like."
+                : "Try widening the budget, or clearing a filter or two."}
+            </Text>
+            {activeCount > 0 ? (
+              <Pressable accessibilityRole="button" onPress={clearAll} style={styles.clear}>
+                <Text style={styles.clearText}>Clear all filters</Text>
+              </Pressable>
+            ) : null}
+          </Card>
         ) : (
           <View style={styles.list}>
             {listings?.map((listing) => (
-              <Pressable
+              <ListingCard
                 key={listing.id}
-                accessibilityRole="button"
-                accessibilityLabel={`${listing.title}, ${listing.city}`}
+                listing={listing}
                 onPress={() => router.push(`/listing/${listing.id}`)}
-                style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-              >
-                <View style={styles.cardTop}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.title}>{listing.title}</Text>
-                    <Text style={styles.location}>
-                      {listing.city} · {listing.bedrooms} bed
-                    </Text>
-                  </View>
-                  <Text style={type.money}>{formatLKR(listing.rentCents)}</Text>
-                </View>
-
-                <View style={styles.landlord}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.landlordName}>{listing.landlordName}</Text>
-                    {listing.landlordRating !== null ? (
-                      <View style={styles.ratingRow}>
-                        <Stars rating={listing.landlordRating} size={13} />
-                        <Text style={styles.ratingText}>
-                          {listing.landlordRating.toFixed(1)} · {listing.landlordTenancyCount}{" "}
-                          completed tenancies
-                        </Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.noHistory}>No RentLoop history yet</Text>
-                    )}
-                  </View>
-                  {listing.verified ? <Pill label="Verified" tone="good" /> : null}
-                </View>
-              </Pressable>
+                onToggleSave={() => toggleSave(listing)}
+              />
             ))}
           </View>
         )}
 
         <Text style={styles.footnote}>
-          Search, filters and enquiries are not built. This exists to show where a tenancy begins —
-          the rest of the app is what happens after.
+          RentLoop is not a listings site and does not try to be. What it adds is the
+          landlord&apos;s record: places marked verified belong to someone this app watched carry a
+          tenancy through to a settled deposit.
         </Text>
       </ScrollView>
     </>
   );
 }
 
+function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      onPress={onPress}
+      style={({ pressed }) => [styles.chip, active && styles.chipOn, pressed && { opacity: 0.85 }]}
+    >
+      <Text style={[styles.chipText, active && styles.chipTextOn]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.group}>
+      <Text style={type.label}>{label}</Text>
+      <View style={styles.groupChips}>{children}</View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: color.bg },
   content: { padding: space.xl, paddingBottom: space.xxxl * 2 },
-  intro: { ...type.caption, fontSize: 13, lineHeight: 19, marginTop: space.sm },
-  loading: { height: 200 },
-  list: { gap: space.sm },
-  card: {
-    backgroundColor: color.surface,
-    borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
+
+  search: {
+    height: 50,
+    borderRadius: radius.sm,
+    borderWidth: 1,
     borderColor: color.border,
-    padding: space.lg,
+    backgroundColor: color.surface,
+    paddingHorizontal: space.lg,
+    fontSize: 15.5,
+    color: color.text,
   },
-  cardPressed: { backgroundColor: color.surfaceSunken },
-  cardTop: { flexDirection: "row", alignItems: "flex-start", gap: space.md },
-  title: { fontSize: 15.5, fontWeight: "600", color: color.text },
-  location: { fontSize: 13, color: color.textMuted, marginTop: 2 },
-  landlord: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    marginTop: space.md,
-    paddingTop: space.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: color.border,
+
+  chipRow: { gap: space.sm, paddingVertical: space.md, paddingRight: space.xl },
+  chip: {
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: color.border,
+    backgroundColor: color.surface,
+    paddingHorizontal: space.lg,
+    paddingVertical: 8,
   },
-  landlordName: { fontSize: 13.5, fontWeight: "600", color: color.text },
-  ratingRow: { flexDirection: "row", alignItems: "center", gap: space.sm, marginTop: 2 },
-  ratingText: { fontSize: 12, color: color.textMuted },
-  noHistory: { fontSize: 12, color: color.textFaint, marginTop: 2, fontStyle: "italic" },
-  footnote: {
-    ...type.caption,
-    fontSize: 12,
-    marginTop: space.xl,
-    lineHeight: 18,
-    fontStyle: "italic",
-  },
+  chipOn: { backgroundColor: color.accent, borderColor: color.accent },
+  chipText: { fontSize: 13, fontWeight: "600", color: color.textMuted },
+  chipTextOn: { color: color.textInverse },
+
+  filters: { marginBottom: space.md },
+  group: { marginBottom: space.lg },
+  groupChips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm, marginTop: space.sm },
+  clear: { paddingVertical: space.sm },
+  clearText: { fontSize: 13.5, fontWeight: "600", color: color.accent },
+
+  needAccount: { marginBottom: space.lg },
+  count: { ...type.label, marginBottom: space.md },
+  loading: { height: 200 },
+  list: { gap: space.lg },
+  emptyText: { ...type.bodyMuted, fontSize: 14, marginTop: space.sm },
+  footnote: { ...type.caption, fontSize: 12, marginTop: space.xxl, lineHeight: 18 },
 });

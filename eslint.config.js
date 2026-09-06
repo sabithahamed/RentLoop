@@ -27,6 +27,7 @@ module.exports = tseslint.config(
         process: "readonly",
         fetch: "readonly",
         URL: "readonly",
+        Buffer: "readonly",
       },
     },
   },
