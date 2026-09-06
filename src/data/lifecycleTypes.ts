@@ -413,6 +413,59 @@ export interface Listing {
   saved: boolean;
 }
 
+/** A code a landlord hands to a tenant so they can ask to join a property. */
+export interface TenantInvite {
+  id: UUID;
+  tenancyId: UUID;
+  code: string;
+  /** Who the landlord meant it for — shown beside who actually turned up. */
+  label: string;
+  createdAt: string;
+  revoked: boolean;
+}
+
+export type JoinRequestStatus = "pending" | "approved" | "declined";
+
+/**
+ * Someone asking to be let onto a property.
+ *
+ * A landlord-issued code does not grant access by itself — codes get
+ * forwarded, and the landlord is the one who knows whether the person holding
+ * it is the person they meant. Carries the requester's name and number for the
+ * same reason an enquiry does: profiles stay private.
+ */
+export interface JoinRequest {
+  id: UUID;
+  tenancyId: UUID;
+  propertyLabel: string;
+  status: JoinRequestStatus;
+  fromName: string | null;
+  fromPhone: string | null;
+  message: string;
+  requestedAt: string;
+  decidedAt: string | null;
+}
+
+/** What a landlord fills in to put one of their own properties on RentLoop. */
+export interface LandlordTenancyDraft {
+  propertyLabel: string;
+  addressLine: string;
+  city: string;
+  rentAmountCents: number;
+  dueDayOfMonth: number;
+  startedOn: ISODate;
+}
+
+/** How the results are ordered. Rent is the one people actually reach for. */
+export type ListingSort = "newest" | "rent_asc" | "rent_desc" | "record";
+
+export const LISTING_SORT_LABEL: Record<ListingSort, string> = {
+  newest: "Newest",
+  rent_asc: "Rent: low first",
+  rent_desc: "Rent: high first",
+  record: "Best track record",
+};
+
 /**
  * An enquiry as the landlord receives it.
  *
@@ -465,6 +518,7 @@ export interface ListingFilters {
   furnished?: Furnishing;
   verifiedOnly?: boolean;
   savedOnly?: boolean;
+  sort?: ListingSort;
 }
 
 // ---------------------------------------------------------------------------

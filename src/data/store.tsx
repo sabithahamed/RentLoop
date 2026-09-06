@@ -102,6 +102,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setTenancy(await repo.getTenancySummary());
   }, []);
 
+  /**
+   * The role stored on the account wins over the one remembered on this
+   * device. Local storage only ever knew which view was last open here; the
+   * profile knows what the person said they were when they signed up, which is
+   * what should decide where they land on a new phone.
+   *
+   * Accounts made before roles existed have none, and keep the local answer.
+   */
+  const adoptAccountRole = useCallback(async () => {
+    try {
+      const stored = await repo.getAccountRole();
+      if (stored) {
+        storeRole(stored);
+        setRoleState(stored);
+      }
+    } catch {
+      // Not fatal — the app still works with the locally remembered view.
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -111,21 +131,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setSession(current);
       setTenancy(summary);
       setBooting(false);
+      if (current) await adoptAccountRole();
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [adoptAccountRole]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    setSession(await repo.signIn(email, password));
-    setTenancy(await repo.getTenancySummary());
-    setRevision((n) => n + 1);
-  }, []);
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      setSession(await repo.signIn(email, password));
+      setTenancy(await repo.getTenancySummary());
+      await adoptAccountRole();
+      setRevision((n) => n + 1);
+    },
+    [adoptAccountRole],
+  );
 
   const signUp = useCallback(async (input: SignUpInput) => {
     setSession(await repo.signUp(input));
     setTenancy(await repo.getTenancySummary());
+    // Straight from what they just chose — no round trip to read it back.
+    storeRole(input.role);
+    setRoleState(input.role);
     setRevision((n) => n + 1);
   }, []);
 

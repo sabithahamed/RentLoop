@@ -40,9 +40,12 @@ import type {
   InspectionSession,
   Invitation,
   LifecycleOverview,
+  JoinRequest,
+  LandlordTenancyDraft,
   Listing,
   ListingDraft,
   ListingFilters,
+  TenantInvite,
   MaintenanceCategory,
   MaintenanceStatus,
   MaintenanceTicket,
@@ -930,6 +933,99 @@ export const mockRepository: Repository = {
     return delay(undefined);
   },
 
+  // --- account role, invites and approvals ----------------------------------
+  //
+  // The mock keeps these in module state rather than pretending to persist
+  // them. It exists so the app runs with no database at all; anything it
+  // returns is this session only, and the screens say so where it matters.
+
+  async getAccountRole() {
+    return delay(accountRole);
+  },
+
+  async setAccountRole(role: Role) {
+    accountRole = role;
+    return delay(undefined);
+  },
+
+  async createLandlordTenancy(draft: LandlordTenancyDraft) {
+    return this.createTenancy({
+      propertyLabel: draft.propertyLabel,
+      addressLine: draft.addressLine,
+      city: draft.city,
+      landlordName: "You",
+      landlordPhone: "",
+      rentAmountCents: draft.rentAmountCents,
+      dueDayOfMonth: draft.dueDayOfMonth,
+      startedOn: draft.startedOn,
+    });
+  },
+
+  async listTenantInvites(tenancyId: UUID) {
+    return delay(tenantInvites.filter((i) => i.tenancyId === tenancyId));
+  },
+
+  async createTenantInvite(tenancyId: UUID, label: string) {
+    const invite: TenantInvite = {
+      id: `invite-${tenantInvites.length + 1}`,
+      tenancyId,
+      code: mockCode(),
+      label: label.trim(),
+      createdAt: new Date().toISOString(),
+      revoked: false,
+    };
+    tenantInvites.unshift(invite);
+    return delay(invite);
+  },
+
+  async revokeTenantInvite(inviteId: UUID) {
+    const invite = tenantInvites.find((i) => i.id === inviteId);
+    if (invite) invite.revoked = true;
+    return delay(undefined);
+  },
+
+  async requestToJoin(code: string, message: string) {
+    const invite = tenantInvites.find(
+      (i) => i.code.toUpperCase() === code.trim().toUpperCase() && !i.revoked,
+    );
+    if (!invite) throw new Error("That code is not valid, or it has been withdrawn");
+
+    joinRequests.unshift({
+      id: `request-${joinRequests.length + 1}`,
+      tenancyId: invite.tenancyId,
+      propertyLabel: state.properties[0]?.label ?? "The property",
+      status: "pending",
+      fromName: "You",
+      fromPhone: null,
+      message,
+      requestedAt: new Date().toISOString(),
+      decidedAt: null,
+    });
+
+    return delay({
+      tenancyId: invite.tenancyId,
+      propertyLabel: state.properties[0]?.label ?? "The property",
+      landlordName: state.landlords[0]?.full_name ?? "your landlord",
+    });
+  },
+
+  async listMyJoinRequests() {
+    return delay(joinRequests.filter((r) => r.fromName === "You"));
+  },
+
+  async listJoinRequests() {
+    return delay(joinRequests.filter((r) => r.fromName !== "You"));
+  },
+
+  async decideJoinRequest(requestId: UUID, approve: boolean) {
+    const request = joinRequests.find((r) => r.id === requestId);
+    if (request) {
+      request.status = approve ? "approved" : "declined";
+      request.decidedAt = new Date().toISOString();
+    }
+    return delay(undefined);
+  },
+
   // --- posting a place ------------------------------------------------------
   //
   // Mock listings the demo landlord posts are marked unverified with no track
@@ -1022,6 +1118,20 @@ export const mockRepository: Repository = {
 
 /** The number this session would be called back on. */
 let contactPhone: string | null = null;
+
+/** Role, invites and requests, for the session only. */
+let accountRole: Role | null = null;
+const tenantInvites: TenantInvite[] = [];
+const joinRequests: JoinRequest[] = [];
+
+/** Readable over the phone: no O/0, no I/1 — same alphabet the database uses. */
+function mockCode(): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return Array.from(
+    { length: 6 },
+    () => alphabet[Math.floor(Math.random() * alphabet.length)],
+  ).join("");
+}
 
 /** Which listings this session posted, so "my listings" means something. */
 const mine = new Set<UUID>();

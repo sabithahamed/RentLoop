@@ -31,10 +31,13 @@ import type {
   InspectionSession,
   Invitation,
   LifecycleOverview,
+  JoinRequest,
+  LandlordTenancyDraft,
   Listing,
   ListingDraft,
   ListingEnquiry,
   ListingFilters,
+  TenantInvite,
   MaintenanceCategory,
   MaintenanceStatus,
   MaintenanceTicket,
@@ -59,6 +62,8 @@ export interface SignUpInput {
   email: string;
   password: string;
   displayName: string;
+  /** Chosen at sign-up. Decides which setup path the account lands in. */
+  role: Role;
 }
 
 /** What the agreement agent produces. Shaped here so the repository does not import the agent. */
@@ -233,6 +238,30 @@ export interface Repository {
    */
   getContactPhone(): Promise<string | null>;
   setContactPhone(phone: string): Promise<void>;
+
+  // Which kind of account this is
+  /** Null for accounts created before roles existed — the app then asks. */
+  getAccountRole(): Promise<Role | null>;
+  setAccountRole(role: Role): Promise<void>;
+
+  // A landlord putting up their own property
+  createLandlordTenancy(draft: LandlordTenancyDraft): Promise<TenancySummary>;
+
+  // Landlord invites a tenant onto a property
+  listTenantInvites(tenancyId: UUID): Promise<TenantInvite[]>;
+  createTenantInvite(tenancyId: UUID, label: string): Promise<TenantInvite>;
+  revokeTenantInvite(inviteId: UUID): Promise<void>;
+
+  // The tenant side of that: ask, then wait to be approved
+  requestToJoin(
+    code: string,
+    message: string,
+  ): Promise<{ tenancyId: UUID; propertyLabel: string; landlordName: string }>;
+  listMyJoinRequests(): Promise<JoinRequest[]>;
+
+  // The landlord side: the queue, and the decision
+  listJoinRequests(): Promise<JoinRequest[]>;
+  decideJoinRequest(requestId: UUID, approve: boolean): Promise<void>;
 
   // Posting a place — the landlord side of discovery
   /** The signed-in landlord's own listings, including ones taken down. */

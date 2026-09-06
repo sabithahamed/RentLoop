@@ -22,6 +22,25 @@ export default function LandlordMore() {
     >
       <Text style={type.title}>More</Text>
 
+      <SectionLabel>Tenants</SectionLabel>
+      <View style={styles.rows}>
+        <NavRow
+          title="Requests"
+          subtitle="Approve or decline people asking to join a property"
+          onPress={() => router.push("/approvals")}
+        />
+        <NavRow
+          title="Invite a tenant"
+          subtitle="Make a code for someone already renting from you"
+          onPress={() => router.push("/invite-tenant")}
+        />
+        <NavRow
+          title="Add a property"
+          subtitle="One you let, with its rent and due date"
+          onPress={() => router.push("/create-property")}
+        />
+      </View>
+
       <SectionLabel>Letting a place</SectionLabel>
       <View style={styles.rows}>
         <NavRow

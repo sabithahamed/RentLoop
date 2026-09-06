@@ -39,7 +39,6 @@ export default function InviteScreen() {
     }
   };
 
-
   if (loading && !invitation) return <LoadingState />;
   if (!invitation || !tenancy) return null;
 

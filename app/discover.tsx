@@ -7,9 +7,11 @@ import { Card, LoadingState } from "@/components/ui";
 import { useApp, useAsync } from "@/data/store";
 import { formatLKR } from "@/data/ledger";
 import {
+  LISTING_SORT_LABEL,
   PROPERTY_TYPE_LABEL,
   type Listing,
   type ListingFilters,
+  type ListingSort,
   type PropertyType,
 } from "@/data/lifecycleTypes";
 import { color, radius, space, type } from "@/theme";
@@ -40,6 +42,7 @@ export default function DiscoverScreen() {
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [savedOnly, setSavedOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [sort, setSort] = useState<ListingSort | undefined>();
 
   const filters: ListingFilters = {
     query: query.trim() || undefined,
@@ -50,12 +53,13 @@ export default function DiscoverScreen() {
     savedOnly: savedOnly || undefined,
     minRentCents: budget !== undefined ? BUDGETS[budget].min : undefined,
     maxRentCents: budget !== undefined ? BUDGETS[budget].max : undefined,
+    sort,
   };
 
   const { data: cities } = useAsync<string[]>(() => repo.listListingCities(), []);
   const { data: listings, loading } = useAsync<Listing[]>(
     () => repo.listListings(filters),
-    [query, city, budget, bedrooms, propertyType, verifiedOnly, savedOnly],
+    [query, city, budget, bedrooms, propertyType, verifiedOnly, savedOnly, sort],
   );
 
   const activeCount =
@@ -128,6 +132,22 @@ export default function DiscoverScreen() {
               label={b.label}
               active={budget === i}
               onPress={() => setBudget(budget === i ? undefined : i)}
+            />
+          ))}
+        </ScrollView>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipRow}
+        >
+          <Text style={styles.sortLabel}>Sort</Text>
+          {(Object.keys(LISTING_SORT_LABEL) as ListingSort[]).map((key) => (
+            <Chip
+              key={key}
+              label={LISTING_SORT_LABEL[key]}
+              active={sort === key}
+              onPress={() => setSort(sort === key ? undefined : key)}
             />
           ))}
         </ScrollView>
@@ -232,6 +252,20 @@ export default function DiscoverScreen() {
           </View>
         )}
 
+        {!session ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push("/sign-up")}
+            style={styles.signUpRow}
+          >
+            <Text style={styles.signUpTitle}>Found somewhere? Make an account</Text>
+            <Text style={styles.signUpBody}>
+              Browsing needs no account. Saving a place, enquiring, and keeping a record of the rent
+              once you move in do — that is the part RentLoop is actually for.
+            </Text>
+          </Pressable>
+        ) : null}
+
         <Pressable
           accessibilityRole="button"
           onPress={() => router.push("/listing/mine")}
@@ -325,6 +359,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: color.accentBorder,
   },
+  sortLabel: {
+    ...type.caption,
+    fontSize: 12,
+    alignSelf: "center",
+    marginRight: space.xs,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+
+  signUpRow: {
+    marginTop: space.xxl,
+    padding: space.lg,
+    borderRadius: radius.lg,
+    backgroundColor: color.surface,
+    borderWidth: 1,
+    borderColor: color.border,
+  },
+  signUpTitle: { ...type.heading, fontSize: 15 },
+  signUpBody: { ...type.caption, fontSize: 13, lineHeight: 19, marginTop: space.xs },
+
   postTitle: { ...type.heading, fontSize: 15, color: color.accent },
   postBody: { ...type.caption, fontSize: 13, lineHeight: 19, marginTop: space.xs },
 });

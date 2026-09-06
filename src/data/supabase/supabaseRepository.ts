@@ -22,10 +22,13 @@ import type {
   InspectionSession,
   Invitation,
   LifecycleOverview,
+  JoinRequest,
+  LandlordTenancyDraft,
   Listing,
   ListingDraft,
   ListingEnquiry,
   ListingFilters,
+  TenantInvite,
   MaintenanceCategory,
   MaintenanceStatus,
   MaintenanceTicket,
@@ -165,6 +168,7 @@ export const supabaseRepository: Repository = {
     await supabase.from("profiles").upsert({
       id: user.id,
       display_name: input.displayName,
+      role: input.role,
     });
 
     return {
@@ -1310,7 +1314,27 @@ export const supabaseRepository: Repository = {
       query = query.or(`title.ilike.${q},description.ilike.${q},city.ilike.${q}`);
     }
 
-    const { data, error } = await query.order("verified", { ascending: false }).order("rent_cents");
+    // Verified first is the default because it is the one thing RentLoop knows
+    // that a listings site does not. Any explicit choice overrides it — someone
+    // sorting by rent wants rent, not a lecture about track records.
+    const sorted = (() => {
+      switch (filters.sort) {
+        case "rent_asc":
+          return query.order("rent_cents", { ascending: true });
+        case "rent_desc":
+          return query.order("rent_cents", { ascending: false });
+        case "record":
+          return query
+            .order("tenancy_count", { ascending: false })
+            .order("rating", { ascending: false, nullsFirst: false });
+        case "newest":
+          return query.order("created_at", { ascending: false });
+        default:
+          return query.order("verified", { ascending: false }).order("rent_cents");
+      }
+    })();
+
+    const { data, error } = await sorted;
     if (error) throw new Error(error.message);
 
     const saved = await savedListingIds();
@@ -1370,6 +1394,163 @@ export const supabaseRepository: Repository = {
       .from("profiles")
       .update({ phone: phone.trim() || null })
       .eq("id", userId);
+    if (error) throw new Error(error.message);
+  },
+
+  // --- account role ---------------------------------------------------------
+
+  async getAccountRole(): Promise<Role | null> {
+    const userId = await requireUserId();
+    const { data } = await supabase.from("profiles").select("role").eq("id", userId).single();
+    return (data?.role as Role | null) ?? null;
+  },
+
+  async setAccountRole(role: Role): Promise<void> {
+    const userId = await requireUserId();
+    const { error } = await supabase.from("profiles").update({ role }).eq("id", userId);
+    if (error) throw new Error(error.message);
+  },
+
+  // --- a landlord putting up their own property -----------------------------
+
+  async createLandlordTenancy(draft: LandlordTenancyDraft): Promise<TenancySummary> {
+    const userId = await requireUserId();
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name, phone")
+      .eq("id", userId)
+      .single();
+
+    const { data: property, error: pErr } = await supabase
+      .from("properties")
+      .insert({
+        owner_id: userId,
+        label: draft.propertyLabel,
+        address_line: draft.addressLine,
+        city: draft.city,
+      })
+      .select()
+      .single();
+    if (pErr || !property) throw new Error(pErr?.message ?? "Failed to create property");
+
+    // The tenancy needs a landlord contact, and here the landlord is the
+    // account creating it — so the contact is them, already linked. That is
+    // what makes the record connected the moment a tenant is approved onto it.
+    const { data: contact, error: cErr } = await supabase
+      .from("landlord_contacts")
+      .insert({
+        owner_id: userId,
+        full_name: profile?.display_name || "You",
+        phone: profile?.phone ?? "",
+        linked_user_id: userId,
+      })
+      .select()
+      .single();
+    if (cErr || !contact) throw new Error(cErr?.message ?? "Failed to create landlord contact");
+
+    const { data: tenancy, error: tErr } = await supabase
+      .from("tenancies")
+      .insert({
+        owner_id: userId,
+        property_id: (property as Property).id,
+        landlord_contact_id: (contact as LandlordContact).id,
+        rent_amount_cents: draft.rentAmountCents,
+        due_day_of_month: draft.dueDayOfMonth,
+        started_on: draft.startedOn,
+      })
+      .select()
+      .single();
+    if (tErr || !tenancy) throw new Error(tErr?.message ?? "Failed to create the property record");
+
+    await supabase
+      .from("tenancy_members")
+      .insert({ tenancy_id: (tenancy as Tenancy).id, user_id: userId, role: "landlord" });
+
+    return {
+      tenancy: tenancy as Tenancy,
+      property: property as Property,
+      landlord: contact as LandlordContact,
+    };
+  },
+
+  // --- inviting a tenant ----------------------------------------------------
+
+  async listTenantInvites(tenancyId: UUID): Promise<TenantInvite[]> {
+    const { data, error } = await supabase
+      .from("tenant_invites")
+      .select("*")
+      .eq("tenancy_id", tenancyId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(toTenantInvite);
+  },
+
+  async createTenantInvite(tenancyId: UUID, label: string): Promise<TenantInvite> {
+    const userId = await requireUserId();
+    const { data, error } = await supabase
+      .from("tenant_invites")
+      .insert({
+        tenancy_id: tenancyId,
+        code: makeInviteCode(),
+        label: label.trim(),
+        created_by: userId,
+      })
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return toTenantInvite(data);
+  },
+
+  async revokeTenantInvite(inviteId: UUID): Promise<void> {
+    const { error } = await supabase
+      .from("tenant_invites")
+      .update({ revoked: true })
+      .eq("id", inviteId);
+    if (error) throw new Error(error.message);
+  },
+
+  // --- asking to join, and being let in -------------------------------------
+
+  async requestToJoin(code: string, message: string) {
+    const { data, error } = await supabase.rpc("request_to_join", {
+      p_code: code.trim(),
+      p_message: message.trim(),
+    });
+    if (error) throw new Error(error.message);
+
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) throw new Error("That code is not valid");
+
+    return {
+      tenancyId: row.out_tenancy_id as UUID,
+      propertyLabel: (row.out_property_label as string) ?? "the property",
+      landlordName: (row.out_landlord_name as string) ?? "your landlord",
+    };
+  },
+
+  async listMyJoinRequests(): Promise<JoinRequest[]> {
+    const userId = await requireUserId();
+    return joinRequests(
+      supabase.from("tenancy_join_requests").select(JOIN_REQUEST_SELECT).eq("user_id", userId),
+    );
+  },
+
+  async listJoinRequests(): Promise<JoinRequest[]> {
+    const userId = await requireUserId();
+    // Everything the reader can see minus their own asks: the read policy
+    // covers both sides, and a landlord looking at their queue does not want
+    // their own request to join somewhere else sitting in it.
+    return joinRequests(
+      supabase.from("tenancy_join_requests").select(JOIN_REQUEST_SELECT).neq("user_id", userId),
+    );
+  },
+
+  async decideJoinRequest(requestId: UUID, approve: boolean): Promise<void> {
+    const { error } = await supabase.rpc("decide_join_request", {
+      p_request_id: requestId,
+      p_approve: approve,
+    });
     if (error) throw new Error(error.message);
   },
 
@@ -1779,7 +1960,37 @@ async function savedListingIds(): Promise<Set<string>> {
   return new Set((data ?? []).map((r) => r.listing_id as string));
 }
 
+const JOIN_REQUEST_SELECT = "*, tenancies(properties(label))";
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
+function toTenantInvite(row: any): TenantInvite {
+  return {
+    id: row.id,
+    tenancyId: row.tenancy_id,
+    code: row.code,
+    label: row.label ?? "",
+    createdAt: row.created_at,
+    revoked: row.revoked,
+  };
+}
+
+async function joinRequests(query: PromiseLike<{ data: any; error: any }>): Promise<JoinRequest[]> {
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    tenancyId: row.tenancy_id,
+    propertyLabel: row.tenancies?.properties?.label ?? "A property",
+    status: row.status,
+    fromName: row.from_name ?? null,
+    fromPhone: row.from_phone ?? null,
+    message: row.message ?? "",
+    requestedAt: row.requested_at,
+    decidedAt: row.decided_at ?? null,
+  }));
+}
+
 /** Draft -> row. Column-for-column, and nothing about reputation in it. */
 function toListingRow(draft: ListingDraft) {
   return {

@@ -53,11 +53,52 @@ async function callProxy(payload: string, signal?: AbortSignal): Promise<Respons
  */
 export const GEMINI_MODEL = process.env.EXPO_PUBLIC_GEMINI_MODEL ?? "gemini-flash-latest";
 
+/**
+ * Models to fall back through when the first one is overloaded.
+ *
+ * The free tier answers 503 "high demand" often enough that a five-turn agent
+ * run will meet one, and retrying the same model harder does not help when it
+ * is the model that is saturated. These are separately provisioned, so a
+ * different one usually answers immediately. Order is deliberate: the
+ * configured model, then the lighter one, then the pinned 2.5.
+ */
+const MODEL_CHAIN = [
+  GEMINI_MODEL,
+  "gemini-flash-lite-latest",
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+].filter((m, i, all) => all.indexOf(m) === i);
+
+/** Which model actually answered last, for the trace. */
+let lastModelUsed = GEMINI_MODEL;
+
+export const modelLabel = (): string => lastModelUsed;
+
 export const geminiApiKey = (): string | null =>
   process.env.EXPO_PUBLIC_GEMINI_API_KEY?.trim() || null;
 
-/** True when the request can go through the server rather than carrying a key. */
-export const usesProxy = (): boolean => isSupabaseConfigured;
+/**
+ * Whether the Edge Function is actually there.
+ *
+ * null until something has tried. Supabase being configured says only that the
+ * project exists — the function is deployed separately, and a project without
+ * it answers 404 to every agent call. Assuming the proxy exists because the
+ * project does is how every assistant in the app silently stopped working.
+ */
+let proxyDeployed: boolean | null = null;
+
+/**
+ * True when a request should go through the server.
+ *
+ * A local key wins. EXPO_PUBLIC_GEMINI_API_KEY is compiled into the bundle, so
+ * setting one is a deliberate statement that this build calls Google directly
+ * — and going through an Edge Function that may not be deployed, on the chance
+ * that it is, buys nothing but a failed round trip. Release builds ship with no
+ * key in .env, which puts every call back through the server, where the secret
+ * stays on the server and usage is capped per account.
+ */
+export const usesProxy = (): boolean =>
+  isSupabaseConfigured && proxyDeployed !== false && geminiApiKey() === null;
 
 /** The assistant is available either way — proxied, or with a local key. */
 export const hasGeminiKey = (): boolean => usesProxy() || geminiApiKey() !== null;
@@ -65,6 +106,21 @@ export const hasGeminiKey = (): boolean => usesProxy() || geminiApiKey() !== nul
 /** Shown in the trace so it is never a mystery which route a run took. */
 export const routeLabel = (): string =>
   usesProxy() ? "via server (key not in app)" : "direct (dev key)";
+
+/** Direct call. The key is in the bundle, so this is development only. */
+function callDirect(
+  payload: string,
+  key: string,
+  model: string,
+  signal?: AbortSignal,
+): Promise<Response> {
+  return fetch(`${ENDPOINT}/${model}:generateContent?key=${key}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal,
+    body: payload,
+  });
+}
 
 // --- Wire types -------------------------------------------------------------
 
@@ -132,21 +188,64 @@ export async function generateContent(input: {
   let response: Response | null = null;
   let body: GenerateResponse | null = null;
 
-  for (let attempt = 0; attempt < 3; attempt++) {
-    response = usesProxy()
-      ? await callProxy(payload, input.signal)
-      : await fetch(`${ENDPOINT}/${GEMINI_MODEL}:generateContent?key=${key}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: input.signal,
-          body: payload,
-        });
-    body = (await response.json()) as GenerateResponse;
+  // Two attempts on each model before moving to the next: a spike that is
+  // going to clear usually clears within a couple of seconds, and one that is
+  // not clears faster by asking a different model than by waiting.
+  const attempts: { model: string; attempt: number }[] = MODEL_CHAIN.flatMap((m) => [
+    { model: m, attempt: 0 },
+    { model: m, attempt: 1 },
+  ]);
 
-    const transient = response.status === 503 || response.status === 429;
-    if (response.ok || !transient || attempt === 2) break;
+  for (let step = 0; step < attempts.length; step++) {
+    const { model, attempt } = attempts[step];
+    const last = step === attempts.length - 1;
+    let attemptResponse: Response;
 
-    await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
+    if (usesProxy()) {
+      // A project without the function deployed answers 404 on native, and on
+      // web fails the CORS preflight so `fetch` rejects outright. Both mean
+      // the same thing, and both used to surface as "Failed to fetch" with
+      // every assistant in the app dead behind it.
+      let proxied: Response | null = null;
+      let proxyFailed = false;
+      try {
+        proxied = await callProxy(payload, input.signal);
+        if (proxied.status === 404) proxyFailed = true;
+      } catch (e) {
+        // An aborted run is the caller changing their mind, not a broken
+        // proxy — rethrow it rather than quietly switching routes.
+        if (e instanceof Error && e.name === "AbortError") throw e;
+        proxyFailed = true;
+      }
+
+      if (proxyFailed) {
+        proxyDeployed = false;
+        if (!key) {
+          throw new Error(
+            "The assistant is not set up: the gemini Edge Function is not deployed to this Supabase project, and there is no EXPO_PUBLIC_GEMINI_API_KEY to fall back on.",
+          );
+        }
+        attemptResponse = await callDirect(payload, key, model, input.signal);
+      } else {
+        proxyDeployed = true;
+        attemptResponse = proxied as Response;
+      }
+    } else {
+      attemptResponse = await callDirect(payload, key as string, model, input.signal);
+    }
+
+    response = attemptResponse;
+    body = (await attemptResponse.json()) as GenerateResponse;
+
+    if (attemptResponse.ok) {
+      lastModelUsed = model;
+      break;
+    }
+
+    const transient = attemptResponse.status === 503 || attemptResponse.status === 429;
+    if (!transient || last) break;
+
+    await new Promise((resolve) => setTimeout(resolve, 1200 * (attempt + 1)));
   }
 
   if (!response || !body) throw new Error("Gemini could not be reached");

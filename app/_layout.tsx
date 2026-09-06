@@ -25,6 +25,12 @@ export default function RootLayout() {
           <Stack.Screen name="sign-in" options={{ headerShown: false }} />
           <Stack.Screen name="sign-up" options={{ title: "Create account" }} />
           <Stack.Screen name="create-tenancy" options={{ title: "Your tenancy" }} />
+          <Stack.Screen name="onboarding/tenant" options={{ title: "Your tenancy" }} />
+          <Stack.Screen name="onboarding/landlord" options={{ title: "Your properties" }} />
+          <Stack.Screen name="create-property" options={{ title: "Add a property" }} />
+          <Stack.Screen name="join-property" options={{ title: "Join a property" }} />
+          <Stack.Screen name="invite-tenant" options={{ title: "Invite a tenant" }} />
+          <Stack.Screen name="approvals" options={{ title: "Requests" }} />
 
           {/* The two role shells own their own tab bars */}
           <Stack.Screen name="tenant" options={{ headerShown: false }} />
