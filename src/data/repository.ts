@@ -204,8 +204,15 @@ export interface Repository {
   // Connected mode
   getInvitation(tenancyId: UUID): Promise<Invitation>;
   sendInvitation(tenancyId: UUID): Promise<Invitation>;
-  /** Prototype shortcut: pretend the other side accepted, so connected mode is demoable. */
   acceptInvitation(tenancyId: UUID): Promise<Invitation>;
+  /**
+   * Join a tenancy from the other side, by code.
+   *
+   * The person redeeming cannot read the invitation — they have no access to
+   * the tenancy yet — so this resolves server-side and creates the membership
+   * in one step.
+   */
+  redeemInvitation(code: string): Promise<{ tenancyId: UUID; propertyLabel: string }>;
 
   // Receipts
   getReceipt(paymentId: UUID): Promise<Receipt>;

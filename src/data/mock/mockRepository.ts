@@ -845,6 +845,24 @@ export const mockRepository: Repository = {
     return delay(invitation);
   },
 
+  async redeemInvitation(code: string) {
+    const invitation = state.invitations.find(
+      (i) => i.code.toUpperCase() === code.trim().toUpperCase() && i.status === "sent",
+    );
+    if (!invitation) throw new Error("That code is not valid, or it has already been used");
+
+    invitation.status = "accepted";
+    invitation.acceptedOn = todayISO();
+
+    const tenancy = state.tenancies.find((t) => t.id === invitation.tenancy_id);
+    const property = state.properties.find((p) => p.id === tenancy?.property_id);
+
+    return delay({
+      tenancyId: invitation.tenancy_id,
+      propertyLabel: property?.label ?? "the property",
+    });
+  },
+
   // Receipts -----------------------------------------------------------------
 
   async getReceipt(paymentId: UUID) {

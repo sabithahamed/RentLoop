@@ -98,6 +98,13 @@ export default function SignInScreen() {
           overdue one.
         </Text>
 
+        <Button
+          label="I have an invite code"
+          variant="ghost"
+          onPress={() => router.push("/join")}
+          style={styles.inviteButton}
+        />
+
         <View style={styles.footer}>
           <Text style={type.caption}>New to RentLoop?</Text>
           <Button
@@ -139,6 +146,7 @@ const styles = StyleSheet.create({
 
   demoHint: { ...type.caption, fontSize: 12, marginTop: space.md, textAlign: "center" },
 
+  inviteButton: { marginTop: space.sm },
   footer: { alignItems: "center", marginTop: space.xxxl },
   footerButton: { height: 40, marginTop: space.xs },
 });

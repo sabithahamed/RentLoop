@@ -53,6 +53,7 @@ export default function RootLayout() {
           <Stack.Screen name="reminders" options={{ title: "Reminders" }} />
           <Stack.Screen name="renewal" options={{ title: "Renewal" }} />
           <Stack.Screen name="invite" options={{ title: "Invite" }} />
+          <Stack.Screen name="join" options={{ title: "Join a tenancy" }} />
           <Stack.Screen name="receipt/[paymentId]" options={{ title: "Receipt" }} />
         </Stack>
       </AppProvider>

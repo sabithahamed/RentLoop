@@ -1258,6 +1258,19 @@ export const supabaseRepository: Repository = {
     return toInvitation(data);
   },
 
+  async redeemInvitation(code: string): Promise<{ tenancyId: UUID; propertyLabel: string }> {
+    const { data, error } = await supabase.rpc("redeem_invitation", { p_code: code });
+    if (error) throw new Error(error.message);
+
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) throw new Error("That code is not valid, or it has already been used");
+
+    return {
+      tenancyId: row.out_tenancy_id,
+      propertyLabel: row.out_property_label ?? "the property",
+    };
+  },
+
   // Receipts -----------------------------------------------------------------
 
   async getReceipt(paymentId: UUID): Promise<Receipt> {
