@@ -24,78 +24,84 @@ export function ListingCard({
 }) {
   const cover = listing.photos[0];
 
+  // The save control is a sibling of the card press target, not a child of it.
+  // Nesting one press target inside another leaves it ambiguous which one a tap
+  // meant — and on web it renders a button inside a button, which is invalid
+  // HTML and breaks hydration.
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${listing.title}, ${listing.city}, ${formatLKR(listing.rentCents)} per month`}
-      onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
-    >
-      <View style={styles.photoWrap}>
-        {cover ? (
-          <Image source={{ uri: cover.url }} style={styles.photo} resizeMode="cover" />
-        ) : (
-          <View style={[styles.photo, styles.photoEmpty]}>
-            <Text style={styles.photoEmptyText}>No photo</Text>
-          </View>
-        )}
-
-        {listing.verified ? (
-          <View style={styles.verifiedTag}>
-            <Text style={styles.verifiedText}>✓ VERIFIED LANDLORD</Text>
-          </View>
-        ) : null}
-
-        {onToggleSave ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={listing.saved ? "Remove from saved" : "Save this place"}
-            onPress={onToggleSave}
-            hitSlop={10}
-            style={styles.saveButton}
-          >
-            <Text style={[styles.saveIcon, listing.saved && styles.saveIconOn]}>
-              {listing.saved ? "♥" : "♡"}
-            </Text>
-          </Pressable>
-        ) : null}
-
-        {listing.photos.length > 1 ? (
-          <View style={styles.countTag}>
-            <Text style={styles.countText}>{listing.photos.length} photos</Text>
-          </View>
-        ) : null}
-      </View>
-
-      <View style={styles.body}>
-        <View style={styles.topLine}>
-          <Text style={styles.rent}>{formatLKR(listing.rentCents)}</Text>
-          <Text style={styles.perMonth}>/month</Text>
-        </View>
-
-        <Text style={styles.title} numberOfLines={1}>
-          {listing.title}
-        </Text>
-
-        <Text style={styles.meta} numberOfLines={1}>
-          {listing.city} · {PROPERTY_TYPE_LABEL[listing.propertyType]} · {listing.bedrooms} bed
-          {listing.bedrooms === 1 ? "" : "s"} · {listing.bathrooms} bath
-          {listing.bathrooms === 1 ? "" : "s"}
-        </Text>
-
-        <View style={styles.landlordRow}>
-          {listing.landlordTenancyCount > 0 ? (
-            <Text style={styles.record}>
-              {listing.landlordRating !== null ? `★ ${listing.landlordRating.toFixed(1)} · ` : ""}
-              {listing.landlordTenancyCount} completed tenanc
-              {listing.landlordTenancyCount === 1 ? "y" : "ies"}
-            </Text>
+    <View style={styles.card}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${listing.title}, ${listing.city}, ${formatLKR(listing.rentCents)} per month`}
+        onPress={onPress}
+        style={({ pressed }) => [styles.press, pressed && styles.pressed]}
+      >
+        <View style={styles.photoWrap}>
+          {cover ? (
+            <Image source={{ uri: cover.url }} style={styles.photo} resizeMode="cover" />
           ) : (
-            <Text style={styles.noRecord}>No RentLoop history yet</Text>
+            <View style={[styles.photo, styles.photoEmpty]}>
+              <Text style={styles.photoEmptyText}>No photo</Text>
+            </View>
           )}
+
+          {listing.verified ? (
+            <View style={styles.verifiedTag}>
+              <Text style={styles.verifiedText}>✓ VERIFIED LANDLORD</Text>
+            </View>
+          ) : null}
+
+          {listing.photos.length > 1 ? (
+            <View style={styles.countTag}>
+              <Text style={styles.countText}>{listing.photos.length} photos</Text>
+            </View>
+          ) : null}
         </View>
-      </View>
-    </Pressable>
+
+        <View style={styles.body}>
+          <View style={styles.topLine}>
+            <Text style={styles.rent}>{formatLKR(listing.rentCents)}</Text>
+            <Text style={styles.perMonth}>/month</Text>
+          </View>
+
+          <Text style={styles.title} numberOfLines={1}>
+            {listing.title}
+          </Text>
+
+          <Text style={styles.meta} numberOfLines={1}>
+            {listing.city} · {PROPERTY_TYPE_LABEL[listing.propertyType]} · {listing.bedrooms} bed
+            {listing.bedrooms === 1 ? "" : "s"} · {listing.bathrooms} bath
+            {listing.bathrooms === 1 ? "" : "s"}
+          </Text>
+
+          <View style={styles.landlordRow}>
+            {listing.landlordTenancyCount > 0 ? (
+              <Text style={styles.record}>
+                {listing.landlordRating !== null ? `★ ${listing.landlordRating.toFixed(1)} · ` : ""}
+                {listing.landlordTenancyCount} completed tenanc
+                {listing.landlordTenancyCount === 1 ? "y" : "ies"}
+              </Text>
+            ) : (
+              <Text style={styles.noRecord}>No RentLoop history yet</Text>
+            )}
+          </View>
+        </View>
+      </Pressable>
+
+      {onToggleSave ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={listing.saved ? "Remove from saved" : "Save this place"}
+          onPress={onToggleSave}
+          hitSlop={10}
+          style={styles.saveButton}
+        >
+          <Text style={[styles.saveIcon, listing.saved && styles.saveIconOn]}>
+            {listing.saved ? "♥" : "♡"}
+          </Text>
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 
@@ -108,6 +114,9 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     ...shadow.card,
   },
+  // The press target fills the card: everything except the save control is
+  // meant to open the listing, including the margins around the text.
+  press: { width: "100%" },
   pressed: { opacity: 0.94 },
 
   photoWrap: { position: "relative", backgroundColor: color.surfaceSunken },
