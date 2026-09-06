@@ -413,6 +413,47 @@ export interface Listing {
   saved: boolean;
 }
 
+/**
+ * An enquiry as the landlord receives it.
+ *
+ * Carries the sender's name and phone because they chose to send it — the
+ * database stamps them from the sender's own profile, which stays private to
+ * everyone else (supabase/006_listing_authoring.sql).
+ */
+export interface ListingEnquiry {
+  id: UUID;
+  listingId: UUID;
+  message: string;
+  sentOn: ISODate;
+  fromName: string | null;
+  fromPhone: string | null;
+}
+
+/**
+ * What a landlord fills in to post a place.
+ *
+ * Deliberately not `Partial<Listing>`. `verified`, `landlordRating` and
+ * `landlordTenancyCount` are RentLoop's judgement about the poster, not the
+ * poster's claim about themselves — the database computes them on write
+ * (supabase/006_listing_authoring.sql) and there is no field here to send
+ * them in.
+ */
+export interface ListingDraft {
+  title: string;
+  description: string;
+  city: string;
+  addressLine: string | null;
+  rentCents: Cents;
+  depositCents: Cents | null;
+  bedrooms: number;
+  bathrooms: number;
+  propertyType: PropertyType;
+  furnished: Furnishing;
+  availableFrom: ISODate | null;
+  /** Local image URIs to upload. Existing photos are untouched by an edit. */
+  photoUris: string[];
+}
+
 /** What the search screen filters by. Every field optional — none is required. */
 export interface ListingFilters {
   query?: string;

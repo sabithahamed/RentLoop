@@ -232,6 +232,18 @@ export default function DiscoverScreen() {
           </View>
         )}
 
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push("/listing/mine")}
+          style={styles.postRow}
+        >
+          <Text style={styles.postTitle}>Have a place to let?</Text>
+          <Text style={styles.postBody}>
+            Post it here. Your listing carries the tenancies you have already completed on RentLoop,
+            which is the part a tenant cannot check anywhere else.
+          </Text>
+        </Pressable>
+
         <Text style={styles.footnote}>
           RentLoop is not a listings site and does not try to be. What it adds is the
           landlord&apos;s record: places marked verified belong to someone this app watched carry a
@@ -304,4 +316,15 @@ const styles = StyleSheet.create({
   list: { gap: space.lg },
   emptyText: { ...type.bodyMuted, fontSize: 14, marginTop: space.sm },
   footnote: { ...type.caption, fontSize: 12, marginTop: space.xxl, lineHeight: 18 },
+
+  postRow: {
+    marginTop: space.xxl,
+    padding: space.lg,
+    borderRadius: radius.lg,
+    backgroundColor: color.accentSoft,
+    borderWidth: 1,
+    borderColor: color.accentBorder,
+  },
+  postTitle: { ...type.heading, fontSize: 15, color: color.accent },
+  postBody: { ...type.caption, fontSize: 13, lineHeight: 19, marginTop: space.xs },
 });

@@ -319,7 +319,7 @@ const STANDARD_AREAS = [
   ["Utilities", "Water meter", true],
 ];
 
-async function makeInspection(tenancyId, kind, capturedNames, on) {
+async function makeInspection(tenancyId, kind, capturedNames, on, findings = {}) {
   const session = must(
     "inspection",
     await supabase
@@ -351,6 +351,10 @@ async function makeInspection(tenancyId, kind, capturedNames, on) {
       area_id: a.id,
       storage_path: `mock://photo/${encodeURIComponent(`${a.room} — ${a.name}`)}`,
       captured_at: `${on}T10:00:00Z`,
+      // What the assistant believes it can see. Advisory only — a human
+      // decides. Present at move-out and absent at move-in is what makes a
+      // finding count as new damage rather than pre-existing.
+      findings: findings[`${a.room}|${a.name}`] ?? [],
     }));
 
   if (photos.length) must("photos", await supabase.from("inspection_photos").insert(photos));
@@ -642,6 +646,16 @@ await makeInspection(
     ["Utilities", "Water meter"],
   ],
   iso(pastEnd),
+  {
+    // Exactly what the landlord is charging for. Present at move-out and
+    // absent at move-in, which is what makes the comparison call it new.
+    "Living room|Walls": [
+      { id: "f-stain", label: "Stain on wall", severity: "minor", confidence: 0.81 },
+    ],
+    "Living room|Windows and locks": [
+      { id: "f-latch", label: "Window latch broken", severity: "moderate", confidence: 0.88 },
+    ],
+  },
 );
 
 const settlement = must(

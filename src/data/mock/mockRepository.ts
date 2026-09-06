@@ -41,6 +41,7 @@ import type {
   Invitation,
   LifecycleOverview,
   Listing,
+  ListingDraft,
   ListingFilters,
   MaintenanceCategory,
   MaintenanceStatus,
@@ -920,6 +921,85 @@ export const mockRepository: Repository = {
     return delay(enquiry);
   },
 
+  // --- posting a place ------------------------------------------------------
+  //
+  // Mock listings the demo landlord posts are marked unverified with no track
+  // record, which is what the database would compute for an account that has
+  // not completed a tenancy. Showing a shiny verified badge here would teach
+  // the wrong thing about what the badge means.
+
+  async listMyListings() {
+    return delay(state.listings.filter((l) => mine.has(l.id)));
+  },
+
+  async createListing(draft: ListingDraft) {
+    const listing: Listing = {
+      id: `listing-${state.listings.length + 1}`,
+      ...toMockListing(draft),
+      landlordName: "You",
+      landlordRating: null,
+      landlordTenancyCount: 0,
+      verified: false,
+      saved: false,
+      photos: draft.photoUris.map((uri, i) => ({
+        id: `photo-${Date.now()}-${i}`,
+        url: uri,
+        caption: null,
+      })),
+    };
+    state.listings.unshift(listing);
+    mine.add(listing.id);
+    return delay(listing);
+  },
+
+  async updateListing(listingId: UUID, draft: ListingDraft) {
+    const listing = state.listings.find((l) => l.id === listingId);
+    if (!listing) throw new Error("Listing not found");
+
+    Object.assign(listing, toMockListing(draft));
+    listing.photos = [
+      ...listing.photos,
+      ...draft.photoUris.map((uri, i) => ({
+        id: `photo-${Date.now()}-${i}`,
+        url: uri,
+        caption: null,
+      })),
+    ];
+    return delay(listing);
+  },
+
+  async removeListingPhoto(listingId: UUID, photoId: UUID) {
+    const listing = state.listings.find((l) => l.id === listingId);
+    if (!listing) throw new Error("Listing not found");
+    listing.photos = listing.photos.filter((p) => p.id !== photoId);
+    return delay(listing);
+  },
+
+  async setListingActive(listingId: UUID, active: boolean) {
+    const listing = state.listings.find((l) => l.id === listingId);
+    if (!listing) throw new Error("Listing not found");
+    if (!active) {
+      state.listings = state.listings.filter((l) => l.id !== listingId);
+      inactive.set(listingId, listing);
+    }
+    return delay(listing);
+  },
+
+  async listEnquiries(listingId: UUID) {
+    return delay(
+      state.enquiries
+        .filter((e) => e.listingId === listingId)
+        .map((e, i) => ({
+          id: `enquiry-${i}`,
+          listingId: e.listingId,
+          message: e.message,
+          sentOn: e.sentOn,
+          fromName: "Demo enquirer",
+          fromPhone: "07X XXX XXXX",
+        })),
+    );
+  },
+
   async getPortfolio() {
     return delay(state.portfolio);
   },
@@ -930,6 +1010,27 @@ export const mockRepository: Repository = {
     return delay(entry);
   },
 };
+
+/** Which listings this session posted, so "my listings" means something. */
+const mine = new Set<UUID>();
+const inactive = new Map<UUID, Listing>();
+
+/** The half of a listing a landlord actually writes. */
+function toMockListing(draft: ListingDraft) {
+  return {
+    title: draft.title.trim(),
+    description: draft.description.trim(),
+    city: draft.city.trim(),
+    addressLine: draft.addressLine,
+    rentCents: draft.rentCents,
+    depositCents: draft.depositCents,
+    bedrooms: draft.bedrooms,
+    bathrooms: draft.bathrooms,
+    propertyType: draft.propertyType,
+    furnished: draft.furnished,
+    availableFrom: draft.availableFrom,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Derivations

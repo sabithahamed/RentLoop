@@ -32,6 +32,8 @@ import type {
   Invitation,
   LifecycleOverview,
   Listing,
+  ListingDraft,
+  ListingEnquiry,
   ListingFilters,
   MaintenanceCategory,
   MaintenanceStatus,
@@ -225,6 +227,17 @@ export interface Repository {
   /** Cities that actually have listings, for the filter row. */
   listListingCities(): Promise<string[]>;
   toggleSavedListing(listingId: UUID, saved: boolean): Promise<void>;
+
+  // Posting a place — the landlord side of discovery
+  /** The signed-in landlord's own listings, including ones taken down. */
+  listMyListings(): Promise<Listing[]>;
+  createListing(draft: ListingDraft): Promise<Listing>;
+  updateListing(listingId: UUID, draft: ListingDraft): Promise<Listing>;
+  removeListingPhoto(listingId: UUID, photoId: UUID): Promise<Listing>;
+  /** Taking a listing down rather than deleting it — enquiries outlive it. */
+  setListingActive(listingId: UUID, active: boolean): Promise<Listing>;
+  /** Enquiries received on one of the landlord's own listings. */
+  listEnquiries(listingId: UUID): Promise<ListingEnquiry[]>;
 
   // Landlord side
   getPortfolio(): Promise<PortfolioEntry[]>;

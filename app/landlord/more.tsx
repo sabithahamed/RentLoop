@@ -22,6 +22,15 @@ export default function LandlordMore() {
     >
       <Text style={type.title}>More</Text>
 
+      <SectionLabel>Letting a place</SectionLabel>
+      <View style={styles.rows}>
+        <NavRow
+          title="My listings"
+          subtitle="Post a place, edit it, read who has asked"
+          onPress={() => router.push("/listing/mine")}
+        />
+      </View>
+
       <SectionLabel>Tenancies</SectionLabel>
       <View style={styles.rows}>
         <NavRow

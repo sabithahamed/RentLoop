@@ -150,6 +150,7 @@ node scripts/db.mjs supabase/002_lifecycle.sql
 node scripts/db.mjs supabase/003_discovery.sql
 node scripts/db.mjs supabase/004_invites.sql
 node scripts/db.mjs supabase/005_ai_usage.sql
+node scripts/db.mjs supabase/006_listing_authoring.sql
 node scripts/seed-demo.mjs
 node scripts/seed-listings.mjs
 ```
@@ -185,6 +186,7 @@ Two scripts verify the security model against the live database rather than assu
 ```bash
 node scripts/verify-rls.mjs        # two users, neither can read the other's data
 node scripts/verify-connected.mjs  # invite, redeem, and a third party still locked out
+node scripts/verify-listings.mjs   # a landlord can post, but cannot write their own track record
 ```
 
 > **Windows note:** `format:check` flags every file locally because Git checks out CRLF while Prettier expects LF. CI runs on Linux and passes. Not a real failure.

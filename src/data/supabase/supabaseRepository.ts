@@ -23,6 +23,8 @@ import type {
   Invitation,
   LifecycleOverview,
   Listing,
+  ListingDraft,
+  ListingEnquiry,
   ListingFilters,
   MaintenanceCategory,
   MaintenanceStatus,
@@ -50,6 +52,12 @@ import {
 } from "../ledger";
 import { STANDARD_AREAS } from "../mock/lifecycleSeed";
 import { RECEIPTS_BUCKET, receiptPath } from "../types";
+
+/**
+ * Listing photos are public, unlike everything else this app stores. A place
+ * being advertised is meant to be seen; a bank slip is not.
+ */
+const LISTINGS_BUCKET = "listing-photos";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -1350,6 +1358,113 @@ export const supabaseRepository: Repository = {
     return { listingId, sentOn: data.sent_on, message: data.message };
   },
 
+  // --- posting a place ------------------------------------------------------
+
+  async listMyListings(): Promise<Listing[]> {
+    const userId = await requireUserId();
+    const { data, error } = await supabase
+      .from("listings")
+      .select("*, listing_photos(id, storage_path, caption, position)")
+      .eq("landlord_id", userId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    const saved = await savedListingIds();
+    return (data ?? []).map((row) => toListing(row, saved));
+  },
+
+  async createListing(draft: ListingDraft): Promise<Listing> {
+    const userId = await requireUserId();
+
+    // The display name is what appears on the listing. It is denormalised in
+    // 003 so the listing survives the account, and it is the only thing about
+    // the landlord that comes from the client — verified, rating and the
+    // tenancy count are written by a trigger from what RentLoop has actually
+    // seen this person do.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", userId)
+      .single();
+
+    const { data, error } = await supabase
+      .from("listings")
+      .insert({
+        landlord_id: userId,
+        landlord_name: profile?.display_name || "Landlord",
+        ...toListingRow(draft),
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+
+    await addListingPhotos(data.id, draft.photoUris, 0);
+    return this.getListing(data.id);
+  },
+
+  async updateListing(listingId: UUID, draft: ListingDraft): Promise<Listing> {
+    const { error } = await supabase
+      .from("listings")
+      .update(toListingRow(draft))
+      .eq("id", listingId);
+    if (error) throw new Error(error.message);
+
+    // Existing photos keep their positions; new ones go on the end.
+    const { count } = await supabase
+      .from("listing_photos")
+      .select("id", { count: "exact", head: true })
+      .eq("listing_id", listingId);
+
+    await addListingPhotos(listingId, draft.photoUris, count ?? 0);
+    return this.getListing(listingId);
+  },
+
+  async removeListingPhoto(listingId: UUID, photoId: UUID): Promise<Listing> {
+    const { data: photo } = await supabase
+      .from("listing_photos")
+      .select("storage_path")
+      .eq("id", photoId)
+      .single();
+
+    const { error } = await supabase.from("listing_photos").delete().eq("id", photoId);
+    if (error) throw new Error(error.message);
+
+    // Take the file too, so a removed photo is actually gone rather than
+    // merely unlinked and still fetchable by anyone who saw the URL.
+    if (photo?.storage_path && !photo.storage_path.startsWith("mock://")) {
+      await supabase.storage.from(LISTINGS_BUCKET).remove([photo.storage_path]);
+    }
+
+    return this.getListing(listingId);
+  },
+
+  async setListingActive(listingId: UUID, active: boolean): Promise<Listing> {
+    const { error } = await supabase
+      .from("listings")
+      .update({ is_active: active })
+      .eq("id", listingId);
+    if (error) throw new Error(error.message);
+    return this.getListing(listingId);
+  },
+
+  async listEnquiries(listingId: UUID): Promise<ListingEnquiry[]> {
+    const { data, error } = await supabase
+      .from("enquiries")
+      .select("*")
+      .eq("listing_id", listingId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      listingId: row.listing_id,
+      message: row.message,
+      sentOn: row.sent_on,
+      fromName: row.from_name ?? null,
+      fromPhone: row.from_phone ?? null,
+    }));
+  },
+
   // Landlord side ------------------------------------------------------------
 
   async getPortfolio(): Promise<PortfolioEntry[]> {
@@ -1650,6 +1765,41 @@ async function savedListingIds(): Promise<Set<string>> {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/** Draft -> row. Column-for-column, and nothing about reputation in it. */
+function toListingRow(draft: ListingDraft) {
+  return {
+    title: draft.title.trim(),
+    description: draft.description.trim(),
+    city: draft.city.trim(),
+    address_line: draft.addressLine?.trim() || null,
+    rent_cents: draft.rentCents,
+    deposit_cents: draft.depositCents,
+    bedrooms: draft.bedrooms,
+    bathrooms: draft.bathrooms,
+    property_type: draft.propertyType,
+    furnished: draft.furnished,
+    available_from: draft.availableFrom,
+  };
+}
+
+/** Upload and link photos, numbering from `startAt` so an edit appends. */
+async function addListingPhotos(listingId: UUID, uris: string[], startAt: number): Promise<void> {
+  if (uris.length === 0) return;
+
+  const paths = await Promise.all(
+    uris.map((uri) => uploadImage(uri, `listings/${listingId}`, LISTINGS_BUCKET)),
+  );
+
+  const { error } = await supabase.from("listing_photos").insert(
+    paths.map((path, i) => ({
+      listing_id: listingId,
+      storage_path: path,
+      position: startAt + i,
+    })),
+  );
+  if (error) throw new Error(error.message);
+}
+
 function toListing(row: any, saved: Set<string>): Listing {
   return {
     id: row.id,
@@ -1675,7 +1825,7 @@ function toListing(row: any, saved: Set<string>): Listing {
       .map((p: any) => ({
         id: p.id,
         // Listing photos live in a public bucket, so no signing round-trip.
-        url: supabase.storage.from("listing-photos").getPublicUrl(p.storage_path).data.publicUrl,
+        url: supabase.storage.from(LISTINGS_BUCKET).getPublicUrl(p.storage_path).data.publicUrl,
         caption: p.caption ?? null,
       })),
   };
@@ -1731,7 +1881,7 @@ async function buildReceipt(paymentId: UUID, issuedOn: ISODate | null): Promise<
 }
 
 /** Uploads a local image and returns its storage path. */
-async function uploadImage(uri: string, folder: string): Promise<string> {
+async function uploadImage(uri: string, folder: string, bucket = RECEIPTS_BUCKET): Promise<string> {
   // Seeded placeholders have no file behind them; store the marker as-is.
   if (uri.startsWith("mock://")) return uri;
 
@@ -1742,7 +1892,7 @@ async function uploadImage(uri: string, folder: string): Promise<string> {
   const blob = await response.blob();
 
   const { error } = await supabase.storage
-    .from(RECEIPTS_BUCKET)
+    .from(bucket)
     .upload(path, blob, { contentType: blob.type || "image/jpeg", upsert: false });
 
   if (error) throw new Error(`Could not upload the photo: ${error.message}`);

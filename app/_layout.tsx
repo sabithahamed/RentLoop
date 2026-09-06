@@ -50,6 +50,9 @@ export default function RootLayout() {
           <Stack.Screen name="review/new" options={{ title: "Write a review" }} />
           <Stack.Screen name="discover" options={{ title: "Find a place" }} />
           <Stack.Screen name="listing/[id]" options={{ title: "Listing" }} />
+          <Stack.Screen name="listing/mine" options={{ title: "My listings" }} />
+          <Stack.Screen name="listing/edit" options={{ title: "Post a place" }} />
+          <Stack.Screen name="listing/enquiries" options={{ title: "Enquiries" }} />
           <Stack.Screen name="reminders" options={{ title: "Reminders" }} />
           <Stack.Screen name="renewal" options={{ title: "Renewal" }} />
           <Stack.Screen name="invite" options={{ title: "Invite" }} />
