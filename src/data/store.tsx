@@ -14,6 +14,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { mockRepository, resetToSeed } from "./mock/mockRepository";
+import { supabaseRepository } from "./supabase/supabaseRepository";
+import { isSupabaseConfigured } from "./supabase/client";
 import type { Repository, Session, SignUpInput } from "./repository";
 import type { Role } from "./lifecycleTypes";
 import type { TenancySummary } from "./types";
@@ -47,7 +49,14 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-const repo: Repository = mockRepository;
+/**
+ * Real data when Supabase is configured, the seeded mock otherwise.
+ *
+ * This is the whole switch. Leaving the Supabase keys out of .env gives you
+ * the demo; adding them gives you persistence. Nothing above this line knows
+ * which one it is talking to.
+ */
+const repo: Repository = isSupabaseConfigured ? supabaseRepository : mockRepository;
 
 /**
  * The chosen role outlives a reload.
