@@ -75,7 +75,7 @@ const stranger = await makeUser("stranger");
 const { data: before } = await landlord.c.from("tenancies").select("id").eq("id", tenancy.id);
 check("landlord sees nothing before redeeming", (before ?? []).length === 0);
 
-const { data: redeemed, error: redeemErr } = await landlord.c.rpc("redeem_invitation", {
+const { error: redeemErr } = await landlord.c.rpc("redeem_invitation", {
   p_code: code,
 });
 check("landlord redeems the code", !redeemErr, redeemErr?.message ?? "");

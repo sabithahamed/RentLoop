@@ -14,6 +14,7 @@
 import {
   GEMINI_MODEL,
   generateContent,
+  routeLabel,
   type FunctionDeclaration,
   type GeminiContent,
   type GeminiPart,
@@ -61,7 +62,7 @@ export async function runAgent<T>(
       imageCount > 0
         ? `Looking at ${imageCount === 1 ? "your photo" : `${imageCount} photos`}`
         : "Reading what you wrote",
-    detail: `${GEMINI_MODEL} · ${definition.tools.length} tools available`,
+    detail: `${GEMINI_MODEL} · ${definition.tools.length} tools · ${routeLabel()}`,
     toolName: null,
     args: null,
     result: null,

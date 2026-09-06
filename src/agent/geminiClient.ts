@@ -6,13 +6,43 @@
  * also means the whole request is visible in one file, which matters when the
  * agent has to be explainable.
  *
- * The key is read from EXPO_PUBLIC_GEMINI_API_KEY. Anything prefixed
- * EXPO_PUBLIC_ is compiled into the JS bundle and is therefore extractable by
- * anyone with the app — acceptable for a prototype, not for release. The real
- * fix is a Supabase Edge Function holding the key server-side; see README.
+ * Two routes, in this order:
+ *
+ *   1. The `gemini` Edge Function, when Supabase is configured. The API key
+ *      lives there as a server secret and never reaches a device, the caller
+ *      must be signed in, and usage is capped per account.
+ *   2. A direct call with EXPO_PUBLIC_GEMINI_API_KEY, for local development
+ *      before the function is deployed. That key IS compiled into the bundle
+ *      and can be extracted by anyone holding the app — fine on a laptop,
+ *      never for a release build.
  */
 
+import { isSupabaseConfigured, supabase } from "../data/supabase/client";
+
 const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
+
+/**
+ * Send the same payload through the Edge Function instead.
+ *
+ * The function forwards Gemini's response verbatim, including its status, so
+ * everything downstream — the retry on 503, the error surfacing — works
+ * unchanged whichever route was taken.
+ */
+async function callProxy(payload: string, signal?: AbortSignal): Promise<Response> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+
+  return fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/gemini`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    signal,
+    body: payload,
+  });
+}
 
 /**
  * Default is the `-latest` alias rather than a pinned version: Google keeps
@@ -26,7 +56,15 @@ export const GEMINI_MODEL = process.env.EXPO_PUBLIC_GEMINI_MODEL ?? "gemini-flas
 export const geminiApiKey = (): string | null =>
   process.env.EXPO_PUBLIC_GEMINI_API_KEY?.trim() || null;
 
-export const hasGeminiKey = (): boolean => geminiApiKey() !== null;
+/** True when the request can go through the server rather than carrying a key. */
+export const usesProxy = (): boolean => isSupabaseConfigured;
+
+/** The assistant is available either way — proxied, or with a local key. */
+export const hasGeminiKey = (): boolean => usesProxy() || geminiApiKey() !== null;
+
+/** Shown in the trace so it is never a mystery which route a run took. */
+export const routeLabel = (): string =>
+  usesProxy() ? "via server (key not in app)" : "direct (dev key)";
 
 // --- Wire types -------------------------------------------------------------
 
@@ -71,13 +109,6 @@ export async function generateContent(input: {
   tools: FunctionDeclaration[];
   signal?: AbortSignal;
 }): Promise<GeminiContent> {
-  const key = geminiApiKey();
-  if (!key) {
-    throw new Error(
-      "No Gemini API key. Add EXPO_PUBLIC_GEMINI_API_KEY to .env and restart the dev server.",
-    );
-  }
-
   const payload = JSON.stringify({
     systemInstruction: { parts: [{ text: input.systemInstruction }] },
     contents: input.contents,
@@ -91,16 +122,25 @@ export async function generateContent(input: {
   // a transient overload is not acceptable, so retry those with backoff.
   // Everything else — bad model, bad key, blocked content — fails immediately,
   // because retrying it would just be slower.
+  const key = geminiApiKey();
+  if (!usesProxy() && !key) {
+    throw new Error(
+      "The assistant is not configured. Either deploy the gemini Edge Function, or add EXPO_PUBLIC_GEMINI_API_KEY to .env for local development.",
+    );
+  }
+
   let response: Response | null = null;
   let body: GenerateResponse | null = null;
 
   for (let attempt = 0; attempt < 3; attempt++) {
-    response = await fetch(`${ENDPOINT}/${GEMINI_MODEL}:generateContent?key=${key}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      signal: input.signal,
-      body: payload,
-    });
+    response = usesProxy()
+      ? await callProxy(payload, input.signal)
+      : await fetch(`${ENDPOINT}/${GEMINI_MODEL}:generateContent?key=${key}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: input.signal,
+          body: payload,
+        });
     body = (await response.json()) as GenerateResponse;
 
     const transient = response.status === 503 || response.status === 429;
