@@ -21,20 +21,42 @@ export default function JoinScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [joined, setJoined] = useState<string | null>(null);
+  const [requested, setRequested] = useState<string | null>(null);
 
+  /**
+   * There are two kinds of code now, and the person holding one has no reason
+   * to know which they were given. A tenant-issued code adds a landlord to the
+   * tenant's record immediately — the tenant knowingly handed it over, so
+   * there is nobody left to ask. A landlord-issued code only raises a request,
+   * because codes get forwarded and the landlord has to confirm who turned up.
+   *
+   * So both are tried against the same box. The landlord-issued path goes
+   * first: far more people hold one of those than the other.
+   */
   const submit = async () => {
     const trimmed = code.trim();
     if (trimmed.length < 4) {
-      setError("Enter the six-character code from your tenant");
+      setError("Enter the six-character code you were given");
       return;
     }
     if (!session) {
-      setError("Sign in first — joining a tenancy attaches it to your account.");
+      setError("Sign in first — a code attaches the property to your account.");
       return;
     }
 
     setBusy(true);
     setError(null);
+    try {
+      const asked = await repo.requestToJoin(trimmed, "");
+      setRequested(asked.propertyLabel);
+      setRole("tenant");
+      invalidate();
+      setBusy(false);
+      return;
+    } catch {
+      // Not a landlord's code. Fall through and try the other kind.
+    }
+
     try {
       const result = await repo.redeemInvitation(trimmed);
       setJoined(result.propertyLabel);
@@ -42,11 +64,34 @@ export default function JoinScreen() {
       setRole("landlord");
       invalidate();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not join that tenancy");
+      setError(e instanceof Error ? e.message : "That code is not valid, or it has been used");
     } finally {
       setBusy(false);
     }
   };
+
+  if (requested) {
+    return (
+      <>
+        <Stack.Screen options={{ title: "Request sent" }} />
+        <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
+          <Card>
+            <Pill label="WAITING FOR APPROVAL" tone="warn" />
+            <Text style={styles.joinedTitle}>You have asked to join {requested}</Text>
+            <Text style={styles.body}>
+              That was a landlord&apos;s code, so your landlord has to approve the request before
+              you can see the property. Nothing is shared either way until they do.
+            </Text>
+            <Button
+              label="Done"
+              onPress={() => router.replace("/tenant/home")}
+              style={styles.action}
+            />
+          </Card>
+        </ScrollView>
+      </>
+    );
+  }
 
   if (joined) {
     return (
@@ -82,15 +127,16 @@ export default function JoinScreen() {
       >
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Card>
-            <Text style={type.title}>Got a code from your tenant?</Text>
+            <Text style={type.title}>Got a code?</Text>
             <Text style={styles.body}>
-              Your tenant has been keeping a record of the rent, the repairs and the condition of
-              the property. Entering their code joins you to it, so you both see the same thing.
+              From your tenant or your landlord — either works here. A tenant&apos;s code joins you
+              to the record they have been keeping. A landlord&apos;s code asks to be added to the
+              property they set up, and they approve it.
             </Text>
           </Card>
 
           <Field
-            label="Invite code"
+            label="Your code"
             required
             value={code}
             onChangeText={(t) => setCode(t.toUpperCase())}

@@ -7,7 +7,7 @@ import { Pill, Stat } from "@/components/lifecycle";
 import { Card, LoadingState, SectionLabel } from "@/components/ui";
 import { useApp, useAsync } from "@/data/store";
 import { formatLKR } from "@/data/ledger";
-import type { PortfolioEntry } from "@/data/lifecycleTypes";
+import type { JoinRequest, PortfolioEntry } from "@/data/lifecycleTypes";
 import { color, radius, space, type } from "@/theme";
 
 /**
@@ -22,6 +22,12 @@ export default function LandlordPortfolio() {
   const insets = useSafeAreaInsets();
 
   const { data: portfolio, loading } = useAsync<PortfolioEntry[]>(() => repo.getPortfolio(), []);
+
+  // Approving is the one thing here somebody else is waiting on, so it cannot
+  // live only behind the More tab. A request nobody notices is a tenant
+  // locked out of their own tenancy.
+  const { data: requests } = useAsync<JoinRequest[]>(() => repo.listJoinRequests(), []);
+  const waiting = requests?.filter((r) => r.status === "pending") ?? [];
 
   const totalArrears = portfolio?.reduce((sum, p) => sum + p.arrearsCents, 0) ?? 0;
   const expected = portfolio?.reduce((sum, p) => sum + p.rentCents, 0) ?? 0;
@@ -38,6 +44,23 @@ export default function LandlordPortfolio() {
     >
       <Text style={type.caption}>Landlord view</Text>
       <Text style={[type.title, styles.heading]}>Your properties</Text>
+
+      {waiting.length > 0 ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push("/approvals")}
+          style={styles.requestBanner}
+        >
+          <Text style={styles.requestTitle}>
+            {waiting.length === 1
+              ? `${waiting[0].fromName ?? "Someone"} is waiting to join ${waiting[0].propertyLabel}`
+              : `${waiting.length} people are waiting to join your properties`}
+          </Text>
+          <Text style={styles.requestBody}>
+            They cannot see anything until you approve. Tap to decide.
+          </Text>
+        </Pressable>
+      ) : null}
 
       <Card>
         <View style={styles.stats}>
@@ -82,7 +105,7 @@ export default function LandlordPortfolio() {
               <View style={styles.cardPills}>
                 {entry.arrearsCents > 0 ? (
                   <Pill
-                    label={`${formatLKR(entry.arrearsCents)} late · ${entry.monthsBehind} months`}
+                    label={`${formatLKR(entry.arrearsCents)} late · ${entry.monthsBehind} ${entry.monthsBehind === 1 ? "month" : "months"}`}
                     tone="bad"
                   />
                 ) : (
@@ -119,6 +142,17 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: space.xl },
   heading: { marginTop: 2, marginBottom: space.lg },
   stats: { flexDirection: "row", gap: space.lg },
+  requestBanner: {
+    padding: space.lg,
+    borderRadius: radius.lg,
+    backgroundColor: color.accentSoft,
+    borderWidth: 1,
+    borderColor: color.accentBorder,
+    marginBottom: space.md,
+  },
+  requestTitle: { ...type.heading, fontSize: 15, color: color.accent },
+  requestBody: { ...type.caption, fontSize: 13, lineHeight: 19, marginTop: space.xs },
+
   ticketNote: {
     ...type.caption,
     marginTop: space.lg,

@@ -1677,10 +1677,25 @@ export const supabaseRepository: Repository = {
     const ids = (memberships ?? []).map((m) => m.tenancy_id);
     if (ids.length === 0) return [];
 
+    // No profiles embed here. owner_id references auth.users, not profiles, so
+    // PostgREST cannot resolve one — and profiles is readable only by its
+    // owner, so a landlord would get a null back even if it could. The tenant's
+    // name is stored on the membership at the moment they are approved
+    // (supabase/009_member_names.sql), which is where a landlord may read it.
     const { data } = await supabase
       .from("tenancies")
-      .select("id, rent_amount_cents, properties(label, city), profiles:owner_id(display_name)")
+      .select("id, rent_amount_cents, properties(label, city)")
       .in("id", ids);
+
+    const { data: tenantRows } = await supabase
+      .from("tenancy_members")
+      .select("tenancy_id, display_name")
+      .eq("role", "tenant")
+      .in("tenancy_id", ids);
+
+    const tenantNames = new Map(
+      (tenantRows ?? []).map((r) => [r.tenancy_id as string, r.display_name as string | null]),
+    );
 
     const entries = await Promise.all(
       ((data ?? []) as unknown as RawPortfolioTenancy[]).map(async (t) => {
@@ -1696,7 +1711,9 @@ export const supabaseRepository: Repository = {
           tenancyId: t.id,
           propertyLabel: t.properties?.label ?? "Property",
           city: t.properties?.city ?? null,
-          tenantName: t.profiles?.display_name ?? "Tenant",
+          // Nobody has been approved onto it yet, which is a real state a
+          // landlord needs to see rather than a missing name.
+          tenantName: tenantNames.get(t.id) || "No tenant yet",
           rentCents: t.rent_amount_cents,
           arrearsCents: behind.reduce((sum, r) => sum + r.balance_cents, 0),
           monthsBehind: behind.length,

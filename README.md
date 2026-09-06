@@ -153,6 +153,7 @@ node scripts/db.mjs supabase/005_ai_usage.sql
 node scripts/db.mjs supabase/006_listing_authoring.sql
 node scripts/db.mjs supabase/007_roles_and_approvals.sql
 node scripts/db.mjs supabase/008_payment_cascade.sql
+node scripts/db.mjs supabase/009_member_names.sql
 node scripts/seed-demo.mjs
 node scripts/seed-listings.mjs
 ```

@@ -99,7 +99,7 @@ export default function SignInScreen() {
         </Text>
 
         <Button
-          label="I have an invite code"
+          label="I have a code"
           variant="ghost"
           onPress={() => router.push("/join")}
           style={styles.inviteButton}

@@ -28,6 +28,7 @@ export default function Index() {
 
   if (!session) return <Redirect href="/discover" />;
   if (role === "landlord") return <Redirect href="/landlord/portfolio" />;
+
   if (!tenancy) return <Redirect href="/onboarding/tenant" />;
   return <Redirect href="/tenant/home" />;
 }

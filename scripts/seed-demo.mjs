@@ -740,4 +740,129 @@ must(
 );
 console.log(`✓ Past tenancy with a disputed deposit and an ignored damp report`);
 
+// --- the landlord side ------------------------------------------------------
+//
+// The demo account is a tenant who also lets a place, which is ordinary enough
+// here. Without this the landlord view is empty and looks broken, because the
+// portfolio is built from landlord *memberships* and a tenant who owns their
+// own record holds none.
+//
+// Created the same way the app creates one: the landlord contact is the
+// account itself, and a membership row with role 'landlord' is what puts it in
+// the portfolio.
+
+const letProperty = must(
+  "let property",
+  await supabase
+    .from("properties")
+    .insert({
+      owner_id: userId,
+      label: "Upstairs unit, Dehiwala",
+      address_line: "Hill Street",
+      city: "Dehiwala",
+    })
+    .select()
+    .single(),
+);
+
+const selfContact = must(
+  "self contact",
+  await supabase
+    .from("landlord_contacts")
+    .insert({
+      owner_id: userId,
+      full_name: DEMO_NAME,
+      phone: "077 555 0142",
+      linked_user_id: userId,
+    })
+    .select()
+    .single(),
+);
+
+const letTenancy = must(
+  "let tenancy",
+  await supabase
+    .from("tenancies")
+    .insert({
+      owner_id: userId,
+      property_id: letProperty.id,
+      landlord_contact_id: selfContact.id,
+      rent_amount_cents: 55_000_00,
+      due_day_of_month: 1,
+      // This month, not months back: a property nobody has been approved onto
+      // yet showing a year of arrears reads as a bug, not as a landlord who
+      // has not been paid.
+      started_on: iso(monthStart(0)),
+    })
+    .select()
+    .single(),
+);
+
+must(
+  "landlord membership",
+  await supabase
+    .from("tenancy_members")
+    .insert({ tenancy_id: letTenancy.id, user_id: userId, role: "landlord" }),
+);
+
+console.log(`✓ A property the demo account lets out, for the landlord view`);
+
+// --- somebody waiting to be approved -----------------------------------------
+//
+// The approval gate is the hardest part of the app to show, because an empty
+// queue looks identical to a broken one. So the demo ships with a real pending
+// request from a real second account: a code was issued, someone entered it,
+// and nothing has been shared with them yet.
+
+const JOIN_CODE = "RENT24";
+const OTHER_EMAIL = "nimal@rentloop.lk";
+
+await supabase.from("tenant_invites").insert({
+  tenancy_id: letTenancy.id,
+  code: JOIN_CODE,
+  label: "Nimal — moving in",
+  created_by: userId,
+});
+
+const other = createClient(
+  process.env.EXPO_PUBLIC_SUPABASE_URL,
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+  { auth: { persistSession: false } },
+);
+
+let otherAuth = (
+  await other.auth.signInWithPassword({ email: OTHER_EMAIL, password: DEMO_PASSWORD })
+).data;
+
+if (!otherAuth?.user) {
+  const signUp = await other.auth.signUp({ email: OTHER_EMAIL, password: DEMO_PASSWORD });
+  if (signUp.error) {
+    console.error(`  (skipped the pending request: ${signUp.error.message})`);
+  } else {
+    otherAuth = signUp.data;
+    if (!otherAuth.session) {
+      otherAuth = (
+        await other.auth.signInWithPassword({ email: OTHER_EMAIL, password: DEMO_PASSWORD })
+      ).data;
+    }
+  }
+}
+
+if (otherAuth?.user) {
+  await other
+    .from("profiles")
+    .upsert({ id: otherAuth.user.id, display_name: "Nimal Perera", phone: "077 412 8890" });
+
+  const { error: askError } = await other.rpc("request_to_join", {
+    p_code: JOIN_CODE,
+    p_message: "Hello — Nimal here. Moving in on the 1st as we discussed.",
+  });
+
+  if (askError) {
+    console.error(`  (skipped the pending request: ${askError.message})`);
+  } else {
+    console.log(`✓ A tenant waiting to be approved, with code ${JOIN_CODE} still live`);
+  }
+}
+
 console.log(`\nDone. Sign in as ${DEMO_EMAIL} / ${DEMO_PASSWORD}`);
