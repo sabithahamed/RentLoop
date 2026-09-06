@@ -86,15 +86,32 @@ await supabase
   .upsert({ id: userId, display_name: DEMO_NAME, phone: "077 555 0142" });
 
 // Wipe this account's tenancies; everything else cascades.
+//
+// The result is checked. This used to fire and forget, so when the delete was
+// refused the seed carried on and inserted a second copy of everything — after
+// four runs the demo landlord had three of every property, and the screens
+// that list them showed each one three times.
 const { data: old } = await supabase.from("tenancies").select("id").eq("owner_id", userId);
 if (old?.length) {
-  await supabase
+  const { error: wipeError } = await supabase
     .from("tenancies")
     .delete()
     .in(
       "id",
       old.map((t) => t.id),
     );
+  if (wipeError) {
+    console.error(`✗ Could not clear the previous demo data: ${wipeError.message}`);
+    process.exit(1);
+  }
+
+  const { data: left } = await supabase.from("tenancies").select("id").eq("owner_id", userId);
+  if (left?.length) {
+    console.error(
+      `✗ ${left.length} tenanc${left.length === 1 ? "y" : "ies"} survived the wipe — seeding now would duplicate them.`,
+    );
+    process.exit(1);
+  }
   console.log(`✓ Cleared ${old.length} previous demo tenanc${old.length === 1 ? "y" : "ies"}`);
 }
 await supabase.from("properties").delete().eq("owner_id", userId);
