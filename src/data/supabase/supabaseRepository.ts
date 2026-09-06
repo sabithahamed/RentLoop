@@ -332,12 +332,22 @@ export const supabaseRepository: Repository = {
       if (res.error) throw res.error;
     }
 
+    // tenancy_id is denormalised onto payments so tenancy-wide queries need no
+    // join. It has to come from the period — inserting a placeholder puts an
+    // empty string into a uuid column and the whole insert is rejected.
+    const { data: period, error: periodError } = await supabase
+      .from("rent_periods")
+      .select("tenancy_id")
+      .eq("id", input.rentPeriodId)
+      .single();
+    if (periodError) throw new Error(periodError.message);
+
     const { data, error } = await supabase
       .from("payments")
       .insert({
         owner_id: userId,
         rent_period_id: input.rentPeriodId,
-        tenancy_id: "", // Denormalised — caller should provide, but mock doesn't either
+        tenancy_id: period.tenancy_id,
         amount_cents: input.amountCents,
         paid_on: input.paidOn,
         method: input.method,
