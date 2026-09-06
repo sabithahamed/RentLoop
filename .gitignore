@@ -60,3 +60,7 @@ coverage/
 .DS_Store
 desktop.ini
 Thumbs.db
+
+# Local secrets (never commit)
+secrets.local.txt
+*.local.txt
